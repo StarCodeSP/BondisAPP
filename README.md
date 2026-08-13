@@ -1,4 +1,3 @@
 # BondisAPP
-## La primera app colaborativa del transporte publico.
----
+La primera app colaborativa del transporte publico.
 **WIP**: *everything*
