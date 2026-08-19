@@ -1,0 +1,7 @@
+geopandas
+pandas
+folium
+pyproj
+fastapi
+pydantic
+pathlib
