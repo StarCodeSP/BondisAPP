@@ -18,7 +18,13 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 BASE_DIR = Path(__file__).resolve().parent
-
+# TODO: Agregar rutas para servir archivos estáticos (CSS, JS, imágenes) 
+# TODO: Agregar rutas para manejar la autenticación y autorización de usuarios 
+# TODO: Agregar rutas para manejar la creación, lectura, actualización y eliminación de paradas y experiencias 
+# TODO: Agregar rutas para manejar la creación, lectura, actualización y eliminación de usuarios 
+# TODO: Agregar autenticación y autorización de usuarios 
+# TODO: Agregar validación de datos de entrada y salida
+# TODO: Agregar manejo de errores y excepciones
 @app.get("/")
 async def read_index():
     # Leer el archivo index.html y devolverlo como respuesta HTML
