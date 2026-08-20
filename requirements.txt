@@ -5,3 +5,5 @@ pyproj
 fastapi
 pydantic
 pathlib
+fastapi
+uvicorn
