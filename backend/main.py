@@ -3,18 +3,19 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from pathlib import Path
 import bcrypt
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.database import Base, engine, get_db 
-from backend.models.paradas import Parada as ParadaModel
-from backend.models.experiencia import reporteExperiencia as ExperienciaModel
-from backend.schemas.paradas import Parada
-from backend.schemas.experiencia import Experiencia
-from backend.schemas.user import user
-from backend.models.user import user as UserModel
+from database import Base, engine, get_db 
+from models.paradas import Parada as ParadaModel
+from models.experiencia import reporteExperiencia as ExperienciaModel
+from schemas.paradas import Parada
+from schemas.experiencia import Experiencia, ExperienciaCreate
+from schemas.user import UserCreate, UserLogin, user
+from models.user import user as UserModel
 
 app = FastAPI()
+
+Base.metadata.create_all(bind=engine)
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -63,13 +64,13 @@ async def get_experiencia(num_coche: int, db: Session = Depends(get_db)):
     return experiencia
 
 @app.post("/api/v1/login", response_model=user, status_code=status.HTTP_200_OK)
-async def login_user(user: user, db: Session = Depends(get_db)):
+async def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
     # Lógica para autenticar al usuario
-    db_user = db.query(UserModel).filter(UserModel.email == user.email).first()
+    db_user = db.query(UserModel).filter(UserModel.email == credentials.email).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="Usuario o contraseña incorrectos")
     
-    password_bytes = user.password.encode('utf-8')
+    password_bytes = credentials.password.encode('utf-8')
     hashed_password_bytes = db_user.password.encode('utf-8')
 
     if not bcrypt.checkpw(password_bytes, hashed_password_bytes):
@@ -78,25 +79,30 @@ async def login_user(user: user, db: Session = Depends(get_db)):
     return db_user
 
 @app.post("/api/v1/reportar_experiencia", response_model=Experiencia, status_code=status.HTTP_201_CREATED)
-async def reportar_experiencia(experiencia: Experiencia, db: Session = Depends(get_db)):
+async def reportar_experiencia(experiencia: ExperienciaCreate, db: Session = Depends(get_db)):
     # Lógica para reportar la experiencia
     experiencia_db = ExperienciaModel(**experiencia.model_dump())
     db.add(experiencia_db)
     db.commit()
     db.refresh(experiencia_db)
     return experiencia_db
-    pass
 
 @app.post("/api/v1/register", response_model=user, status_code=status.HTTP_201_CREATED)
-async def register_user(user: user, db: Session = Depends(get_db)):
+async def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     # Lógica para registrar un nuevo usuario
-    password_bytes = user.password.encode('utf-8')
-    hashed_password = bcrypt.hashpw(password_bytes)
-    user.password = hashed_password.decode('utf-8')
-    db.add(user)
+    if db.query(UserModel).filter(UserModel.email == user_data.email).first():
+        raise HTTPException(status_code=409, detail="El email ya está registrado")
+
+    password_bytes = user_data.password.encode('utf-8')
+    hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+    user_db = UserModel(
+        nombre=user_data.nombre,
+        email=user_data.email,
+        password=hashed_password.decode('utf-8'),
+    )
+    db.add(user_db)
     db.commit()
-    db.refresh(user)
-    return user
-    pass
+    db.refresh(user_db)
+    return user_db
 
 

@@ -1,13 +1,10 @@
 from typing import List, Optional
 from sqlalchemy import create_engine, String, ForeignKey, text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 
-# Declaramos la base para los modelos: Parada, 
-# TODO: Agregar más modelos según sea necesario
-class Base(DeclarativeBase):
-    pass
+from database import Base
 
 class Parada(Base):
     __tablename__ = "paradas"

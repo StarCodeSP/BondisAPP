@@ -1,17 +1,15 @@
-from uuid import UUID as PyUUID
+from uuid import UUID as PyUUID, uuid4
 
 from sqlalchemy import String, text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
-
-class Base(DeclarativeBase):
-    pass
+from database import Base
 
 class user(Base):
     __tablename__ = "users"
 
-    id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=None)
+    id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     nombre: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(100), nullable=False)

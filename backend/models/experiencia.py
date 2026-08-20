@@ -2,15 +2,10 @@ from typing import Optional
 from uuid import UUID as PyUUID
 
 from sqlalchemy import String, ForeignKey, text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
-
-# Declaramos la base para los modelos: Experiencia,
-# TODO: Agregar más modelos según sea necesario
-
-class Base(DeclarativeBase):
-    pass
+from database import Base
 
 class reporteExperiencia(Base):
     __tablename__ = "reporte_experiencia"

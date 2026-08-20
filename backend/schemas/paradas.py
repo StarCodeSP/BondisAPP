@@ -7,3 +7,5 @@ class Parada(BaseModel):
     latitud: float
     longitud: float
     activa: bool 
+
+    model_config = {"from_attributes": True}
