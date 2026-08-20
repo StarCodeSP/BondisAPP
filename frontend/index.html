@@ -2,10 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BondisAPP - Territorios Vivos</title>
-    <!-- CSS Leaflet Mapa -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
             --primary: #0066cc;
@@ -90,17 +88,18 @@
             color: var(--text);
         }
 
-        #map {
+        /* Iframe responsivo de tu mapa original */
+        iframe {
             width: 100%;
-            height: 55vh;
-            min-height: 320px;
+            height: 50vh;
+            min-height: 350px;
             max-height: 500px;
+            border: 0;
             border-radius: 8px;
-            border: 1px solid var(--border);
-            z-index: 1;
+            display: block;
         }
 
-        /* Formulario adaptado a táctil */
+        /* Formulario maquetado optimizado para pantallas táctiles */
         .form-group {
             margin-bottom: 12px;
         }
@@ -119,7 +118,7 @@
             border-radius: 8px;
             border: 1px solid #ccc;
             font-family: inherit;
-            font-size: 1rem; /* Previene el zoom automático al hacer tap en celulares */
+            font-size: 1rem; /* Evita el auto-zoom en iOS/Android */
             background-color: #fafafa;
             appearance: none;
             -webkit-appearance: none;
@@ -144,19 +143,6 @@
             cursor: pointer;
             margin-top: 4px;
         }
-
-        /* Indicadores de Categorías */
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        .badge-transporte { background: #e3f2fd; color: #0d47a1; }
-        .badge-accesibilidad { background: #fff3e0; color: #e65100; }
-        .badge-experiencia { background: #f3e5f5; color: #4a148c; }
     </style>
 </head>
 <body>
@@ -164,18 +150,20 @@
     <div class="container">
         <header>
             <h1>BondisAPP</h1>
-            <p>Mapa colaborativo de experiencias del territorio urbano</p>
+            <p>Aplicación colaborativa del transporte público</p>
         </header>
 
         <div class="grid-layout">
             
-            <!-- Columna Mapa (Primero en celulares) -->
+            <!-- Tu iframe de mapa intacto -->
             <div class="card">
                 <h2>Explorar Territorio</h2>
-                <div id="map"></div>
+                <div id="app">
+                    <iframe src="/mapa_paradas_montevideo" loading="lazy" allowfullscreen></iframe>
+                </div>
             </div>
 
-            <!-- Columna Formulario (Debajo del mapa en celulares) -->
+            <!-- Formulario maquetado (demo) -->
             <div class="card">
                 <h2>Registrar Experiencia</h2>
                 <p style="font-size: 0.85rem; color: var(--subtext); margin-bottom: 12px;">
@@ -203,7 +191,7 @@
 
                 <div class="form-group">
                     <label>Comentario adicional</label>
-                    <textarea rows="3" placeholder="Ej. El coche venía con los asientos limpios..."></textarea>
+                    <textarea rows="3" placeholder="Ej. El coche venía limpio pero demoró en la parada..."></textarea>
                 </div>
 
                 <button type="button" class="btn-dummy">Agregar Reporte (Demo)</button>
@@ -212,52 +200,5 @@
         </div>
     </div>
 
-    <!-- Script Leaflet -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // Inicializar Mapa centrado en Montevideo
-        const map = L.map('map', {
-            tap: true // Optimiza los toques en pantallas táctiles móviles
-        }).setView([-34.9011, -56.1645], 13);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Marcadores de prueba
-        const marcadoresDemo = [
-            {
-                lat: -34.9011,
-                lng: -56.1645,
-                titulo: "Transporte",
-                badge: "badge-transporte",
-                texto: "Ómnibus muy lleno en hora pico."
-            },
-            {
-                lat: -34.9065,
-                lng: -56.1850,
-                titulo: "Experiencia",
-                badge: "badge-experiencia",
-                texto: "Artista callejero tocando música en vivo."
-            },
-            {
-                lat: -34.8910,
-                lng: -56.1520,
-                titulo: "Accesibilidad",
-                badge: "badge-accesibilidad",
-                texto: "Parada sin rampa accesible para sillas de ruedas."
-            }
-        ];
-
-        // Dibujar marcadores
-        marcadoresDemo.forEach(m => {
-            L.marker([m.lat, m.lng])
-                .addTo(map)
-                .bindPopup(`
-                    <span class="badge ${m.badge}">${m.titulo}</span><br>
-                    <strong>${m.texto}</strong>
-                `);
-        });
-    </script>
 </body>
 </html>
