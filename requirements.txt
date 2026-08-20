@@ -2,7 +2,7 @@ geopandas
 pandas
 folium
 pyproj
-fastapi
+fastapi[standard]
 pydantic
 pathlib
 fastapi
