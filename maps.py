@@ -12,6 +12,20 @@ def generar_mapa_paradas():
     if 'DESC_LINEA' in df.columns:
         df = df.drop(columns=['DESC_LINEA'])
 
+    if 'COD_VARIAN' in df.columns:
+        df = df.drop(columns=['COD_VARIAN'])
+
+    if 'ORDINAL' in df.columns:
+        df = df.drop(columns=['ORDINAL'])
+
+    if 'COD_CALLE1' in df.columns:
+        df = df.drop(columns=['COD_CALLE1'])
+
+    if 'COD_CALLE2' in df.columns:
+            df = df.drop(columns=['COD_CALLE2'])
+
+    
+
     # Eliminar duplicados basados en la columna COD_UBIC_P, manteniendo el primer registro
     df_unicos = df.drop_duplicates(subset=['COD_UBIC_P'], keep='first')
 
