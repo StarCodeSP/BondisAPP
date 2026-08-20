@@ -1,0 +1,6 @@
+.BondisAPPvenv/
+archivo_procesado.csv
+.env
+__pycache__/
+*.py[cod]
+*$py.class
