@@ -8,5 +8,5 @@ pathlib
 fastapi
 uvicorn
 bcrypt
-sqlalchemy
-
+sqlalchemy[postgresql]
+psycopg

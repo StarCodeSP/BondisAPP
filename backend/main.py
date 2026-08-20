@@ -7,10 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.database import Base, engine, get_db 
-from backend.models.paradas import Parada
-from backend.models.experiencia import Experiencia
-from backend.schemas.paradas import Parada, ParadaCreate, ParadaUpdate
-from backend.schemas.experiencia import reporteExperiencia
+from backend.models.paradas import Parada as ParadaModel
+from backend.models.experiencia import reporteExperiencia as ExperienciaModel
+from backend.schemas.paradas import Parada
+from backend.schemas.experiencia import Experiencia
 from backend.schemas.user import user
 from backend.models.user import user as UserModel
 
@@ -37,30 +37,30 @@ async def read_mapa_paradas():
 @app.get("/api/v1/paradas", response_model=list[Parada])
 async def get_paradas(db: Session = Depends(get_db)):   
     # Lógica para obtener todas las paradas
-    paradas = db.query(Parada).all()
+    paradas = db.query(ParadaModel).all()
     return paradas
 
 @app.get("/api/v1/paradas/{parada_id}", response_model=Parada)
 async def get_parada(parada_id: int, db: Session = Depends(get_db)):
     # Lógica para obtener una parada específica por su ID
-    parada = db.query(Parada).filter(Parada.id == parada_id).first()
+    parada = db.query(ParadaModel).filter(ParadaModel.id == parada_id).first()
     if not parada:
         raise HTTPException(status_code=404, detail="Parada no encontrada")
     return parada
 
-@app.get("/api/v1/experiencias", response_model=list[reporteExperiencia])
+@app.get("/api/v1/experiencias", response_model=list[Experiencia])
 async def get_experiencias(db: Session = Depends(get_db)):
     # Lógica para obtener todas las experiencias
-    experiencias = db.query(reporteExperiencia).all()
+    experiencias = db.query(ExperienciaModel).all()
     return experiencias
 
-@app.get("/api/v1/experiencias/{num_coche}", response_model=reporteExperiencia)
+@app.get("/api/v1/experiencias/{num_coche}", response_model=Experiencia)
 async def get_experiencia(num_coche: int, db: Session = Depends(get_db)):
     # Lógica para obtener una experiencia específica por el número de coche
-    experiencias = db.query(reporteExperiencia).filter(reporteExperiencia.num_coche == num_coche)
-    if not experiencias:
+    experiencia = db.query(ExperienciaModel).filter(ExperienciaModel.num_coche == num_coche).first()
+    if not experiencia:
         raise HTTPException(status_code=404, detail="Experiencias no encontradas")
-    return experiencias
+    return experiencia
 
 @app.post("/api/v1/login", response_model=user, status_code=status.HTTP_200_OK)
 async def login_user(user: user, db: Session = Depends(get_db)):
@@ -77,13 +77,14 @@ async def login_user(user: user, db: Session = Depends(get_db)):
     
     return db_user
 
-@app.post("/api/v1/reportar_experiencia", response_model=reporteExperiencia, status_code=status.HTTP_201_CREATED)
-async def reportar_experiencia(experiencia: reporteExperiencia, db: Session = Depends(get_db)):
+@app.post("/api/v1/reportar_experiencia", response_model=Experiencia, status_code=status.HTTP_201_CREATED)
+async def reportar_experiencia(experiencia: Experiencia, db: Session = Depends(get_db)):
     # Lógica para reportar la experiencia
-    db.add(experiencia)
+    experiencia_db = ExperienciaModel(**experiencia.model_dump())
+    db.add(experiencia_db)
     db.commit()
-    db.refresh(experiencia)
-    return experiencia
+    db.refresh(experiencia_db)
+    return experiencia_db
     pass
 
 @app.post("/api/v1/register", response_model=user, status_code=status.HTTP_201_CREATED)
