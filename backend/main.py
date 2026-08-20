@@ -1,7 +1,15 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, status, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from pathlib import Path
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from backend.database import Base, engine, get_db 
+from backend.models.paradas import Parada
+from backend.models.experiencia import Experiencia
+from backend.schemas.paradas import Parada, ParadaCreate, ParadaUpdate
+from backend.schemas.experiencia import reporteExperiencia
 
 app = FastAPI()
 
@@ -22,3 +30,4 @@ async def read_mapa_paradas():
         html_content = f.read()
 
     return HTMLResponse(content=html_content, status_code=200)
+
