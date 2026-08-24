@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 
-from database import Base
+from backend.database import Base
 
 class Parada(Base):
     __tablename__ = "paradas"

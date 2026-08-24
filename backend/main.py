@@ -5,19 +5,28 @@ from pathlib import Path
 import bcrypt
 from sqlalchemy.orm import Session
 
-from database import Base, engine, get_db 
-from models.paradas import Parada as ParadaModel
-from models.experiencia import reporteExperiencia as ExperienciaModel
-from schemas.paradas import Parada
-from schemas.experiencia import Experiencia, ExperienciaCreate
-from schemas.user import UserCreate, UserLogin, user
-from models.user import user as UserModel
+from backend.database import Base, engine, get_db 
+from backend.models.paradas import Parada as ParadaModel
+from backend.models.experiencia import reporteExperiencia as ExperienciaModel
+from backend.schemas.paradas import Parada
+from backend.schemas.experiencia import Experiencia, ExperienciaCreate
+from backend.schemas.user import UserCreate, UserLogin, user
+from backend.models.user import user as UserModel
 
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
 
 BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
+
+
+def _read_frontend_html(filename: str) -> str:
+    html_path = FRONTEND_DIR / filename
+    if not html_path.exists():
+        raise HTTPException(status_code=404, detail=f"Archivo no encontrado: {filename}")
+    return html_path.read_text(encoding="utf-8")
+
 # TODO: Agregar rutas para servir archivos estáticos (CSS, JS, imágenes) 
 # TODO: Agregar rutas para manejar la autenticación y autorización de usuarios 
 # TODO: Agregar rutas para manejar la creación, lectura, actualización y eliminación de paradas y experiencias 
@@ -27,17 +36,40 @@ BASE_DIR = Path(__file__).resolve().parent
 # TODO: Agregar manejo de errores y excepciones
 @app.get("/")
 async def read_index():
-    # Leer el archivo index.html y devolverlo como respuesta HTML
-    with open(BASE_DIR / "../frontend/index.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
+    # Leer el archivo inicio.html y devolverlo como respuesta HTML
+    html_content = _read_frontend_html("inicio.html")
+    return HTMLResponse(content=html_content, status_code=200)
 
+
+@app.get("/paradas")
+async def read_paradas():
+    html_content = _read_frontend_html("paradas.html")
+    return HTMLResponse(content=html_content, status_code=200)
+
+
+@app.get("/perfil")
+async def read_perfil():
+    html_content = _read_frontend_html("perfil.html")
+    return HTMLResponse(content=html_content, status_code=200)
+
+
+@app.get("/reportar")
+async def read_reportar():
+    html_content = _read_frontend_html("reportar.html")
     return HTMLResponse(content=html_content, status_code=200)
 
 @app.get("/mapa_paradas_montevideo")
 async def read_mapa_paradas():
     # Leer el archivo mapa_paradas_montevideo.html y devolverlo como respuesta HTML
-    with open(BASE_DIR / "../frontend/mapa_paradas_montevideo.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
+    html_content = _read_frontend_html("mapa_paradas_montevideo.html")
+
+    return HTMLResponse(content=html_content, status_code=200)
+
+
+@app.get("/mapa_paradas_montevideo.html")
+async def read_mapa_paradas_html():
+    # Alias para compatibilidad con referencias directas al archivo .html
+    html_content = _read_frontend_html("mapa_paradas_montevideo.html")
 
     return HTMLResponse(content=html_content, status_code=200)
 
