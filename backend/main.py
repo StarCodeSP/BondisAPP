@@ -1,5 +1,6 @@
 from fastapi import Depends, FastAPI, status, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pathlib import Path
 import bcrypt
@@ -27,12 +28,9 @@ def _read_frontend_html(filename: str) -> str:
         raise HTTPException(status_code=404, detail=f"Archivo no encontrado: {filename}")
     return html_path.read_text(encoding="utf-8")
 
-# TODO: Agregar rutas para servir archivos estáticos (CSS, JS, imágenes) 
-# TODO: Agregar rutas para manejar la autenticación y autorización de usuarios 
-# TODO: Agregar rutas para manejar la creación, lectura, actualización y eliminación de paradas y experiencias 
-# TODO: Agregar rutas para manejar la creación, lectura, actualización y eliminación de usuarios 
-# TODO: Agregar autenticación y autorización de usuarios 
-# TODO: Agregar validación de datos de entrada y salida
+ 
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
+
 # TODO: Agregar manejo de errores y excepciones
 @app.get("/")
 async def read_index():
