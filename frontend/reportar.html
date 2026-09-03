@@ -28,6 +28,14 @@
 <span class="material-symbols-outlined absolute right-4 top-1/2 transform -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
 </div>
 </div>
+<!-- Bus number -->
+<div class="flex flex-col gap-stack-gap-sm">
+<label class="font-title-md text-title-md text-on-surface flex items-center gap-2" for="busNumber">
+<span class="material-symbols-outlined text-secondary">confirmation_number</span>
+          Número de coche
+        </label>
+<input class="w-full bg-surface-container-high text-on-surface font-body-lg text-body-lg p-stack-gap-md rounded-xl shadow-sm focus:outline-none" id="busNumber" min="1" max="999" name="num_coche" required type="number" placeholder="Ej.: 123">
+</div>
 <!-- General Experience -->
 <div class="flex flex-col gap-stack-gap-sm bg-surface-container p-stack-gap-md rounded-xl shadow-md" style="border: 1px solid rgba(255,255,255,0.05);">
 <label class="font-title-md text-title-md text-on-surface flex items-center gap-2">
@@ -183,49 +191,7 @@
     setupRating('generalRating', 'generalRatingValue', 'text-primary', 'text-on-surface-variant');
     setupRating('cleanRating', 'cleanRatingValue', 'text-secondary', 'text-on-surface-variant');
 
-    // Form Submit Simulation
-    const form = document.getElementById('reportForm');
-    const submitBtn = form.querySelector('button[type="submit"]');
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      
-      const originalText = submitBtn.innerHTML;
-      submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Enviando...';
-      submitBtn.disabled = true;
-      submitBtn.classList.add('opacity-80');
-
-      setTimeout(() => {
-        submitBtn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> ¡Gracias!';
-        submitBtn.classList.remove('bg-primary');
-        submitBtn.classList.add('bg-secondary', 'text-on-secondary');
-        
-        // Reset after delay
-        setTimeout(() => {
-          form.reset();
-          
-          // Reset visual states
-          submitBtn.innerHTML = originalText;
-          submitBtn.classList.add('bg-primary');
-          submitBtn.classList.remove('bg-secondary', 'text-on-secondary', 'opacity-80');
-          submitBtn.disabled = false;
-          
-          // Reset stars manually
-          document.querySelectorAll('.star-btn span, .clean-star-btn span').forEach(icon => {
-             icon.style.fontVariationSettings = "'FILL' 0";
-          });
-          document.querySelectorAll('.star-btn').forEach(btn => {
-             btn.classList.remove('text-primary');
-             btn.classList.add('text-on-surface-variant');
-          });
-           document.querySelectorAll('.clean-star-btn').forEach(btn => {
-             btn.classList.remove('text-secondary');
-             btn.classList.add('text-on-surface-variant');
-          });
-        }, 2000);
-      }, 1200);
-    });
   });
-</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container/90 backdrop-blur-xl" data-active-classes="text-secondary"><div class="flex justify-around items-center h-16 px-unit"><a class="flex flex-col items-center justify-center gap-1 w-full h-full text-on-surface-variant transition-colors" data-path="inicio" href="/"><span class="material-symbols-outlined">home</span><span class="font-label-caps text-label-caps">Inicio</span></a><a class="flex flex-col items-center justify-center gap-1 w-full h-full text-on-surface-variant transition-colors" data-path="paradas" href="/paradas"><span class="material-symbols-outlined">location_on</span><span class="font-label-caps text-label-caps">Paradas</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-1 w-full h-full transition-colors text-secondary" data-path="reportar" href="/reportar"><span class="material-symbols-outlined">rate_review</span><span class="font-label-caps text-label-caps">Reportar</span></a><a class="flex flex-col items-center justify-center gap-1 w-full h-full text-on-surface-variant transition-colors" data-path="perfil" href="/perfil"><span class="material-symbols-outlined">person</span><span class="font-label-caps text-label-caps">Perfil</span></a></div></nav>
+</script><script src="/static/reportar.js"></script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container/90 backdrop-blur-xl" data-active-classes="text-secondary"><div class="flex justify-around items-center h-16 px-unit"><a class="flex flex-col items-center justify-center gap-1 w-full h-full text-on-surface-variant transition-colors" data-path="inicio" href="/"><span class="material-symbols-outlined">home</span><span class="font-label-caps text-label-caps">Inicio</span></a><a class="flex flex-col items-center justify-center gap-1 w-full h-full text-on-surface-variant transition-colors" data-path="paradas" href="/paradas"><span class="material-symbols-outlined">location_on</span><span class="font-label-caps text-label-caps">Paradas</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-1 w-full h-full transition-colors text-secondary" data-path="reportar" href="/reportar"><span class="material-symbols-outlined">rate_review</span><span class="font-label-caps text-label-caps">Reportar</span></a><a class="flex flex-col items-center justify-center gap-1 w-full h-full text-on-surface-variant transition-colors" data-path="perfil" href="/perfil"><span class="material-symbols-outlined">person</span><span class="font-label-caps text-label-caps">Perfil</span></a></div></nav>
 
 </body></html>
