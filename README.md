@@ -2,7 +2,7 @@
 
 Aplicación web colaborativa para consultar paradas de ómnibus en Montevideo y compartir experiencias de viaje. El proyecto combina una API REST construida con FastAPI, persistencia mediante SQLAlchemy/PostgreSQL y una interfaz HTML estática.
 
-> Estado: prototipo funcional. La API de consultas, registro, login y creación de reportes está implementada; varias interacciones de la interfaz todavía son demostraciones visuales.
+> TODO: Actualizar README, no demuestra el estado actual de la aplicación 
 
 ## Funcionalidades
 
