@@ -13,10 +13,12 @@ from backend.schemas.paradas import Parada
 from backend.schemas.experiencia import Experiencia, ExperienciaCreate
 from backend.schemas.user import UserCreate, UserLogin, user
 from backend.models.user import user as UserModel
+from backend.stmAPI import STMAPIError, stm_client
 
 app = FastAPI()
 
-Base.metadata.create_all(bind=engine)
+# Las tablas se manejan con Alembic; no se crean acá manualmente.
+# Base.metadata.create_all(bind=engine)
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
@@ -140,5 +142,21 @@ async def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user_db)
     return user_db
+
+
+@app.get("/api/v1/transport/montevideo/paradas")
+async def get_stm_paradas(query: str | None = None, stop_id: str | None = None):
+    try:
+        return stm_client.get_stops(query=query, stop_id=stop_id)
+    except STMAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get("/api/v1/transport/montevideo/arribos/{stop_id}")
+async def get_stm_arrivals(stop_id: str):
+    try:
+        return stm_client.get_arrivals(stop_id=stop_id)
+    except STMAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 

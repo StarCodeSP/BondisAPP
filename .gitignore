@@ -1,6 +1,26 @@
+# entorno virtual
+.venv/
+venv/
 .BondisAPPvenv/
-archivo_procesado.csv
+
+# variables de entorno
 .env
+.env.*
+
+# Python cache
 __pycache__/
+*.pyc
+*.pyo
+
+# herramientas
+.pytest_cache/
+.mypy_cache/
+
+# sistema
+.DS_Store
 *.py[cod]
 *$py.class
+
+# extras innecesarios
+*.log
+archivo_procesado.csv

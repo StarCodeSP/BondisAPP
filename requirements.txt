@@ -10,3 +10,4 @@ uvicorn
 bcrypt
 sqlalchemy[postgresql]
 psycopg
+alembic

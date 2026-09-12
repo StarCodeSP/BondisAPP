@@ -14,3 +14,5 @@ class user(Base):
     email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(100), nullable=False)
     fecha_registro: Mapped[str] = mapped_column(String(50), nullable=False, server_default=text("now()"))
+    level: Mapped[int] = mapped_column(nullable=False, server_default=text("1"))
+    exp: Mapped[int] = mapped_column(nullable=False, server_default=text("0"))

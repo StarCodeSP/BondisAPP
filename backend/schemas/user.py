@@ -16,5 +16,6 @@ class user(BaseModel):
     nombre: str
     email: str
     fecha_registro: str
-
+    level: int
+    exp: int
     model_config = {"from_attributes": True}
