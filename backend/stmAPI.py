@@ -118,7 +118,6 @@ class STMClient:
     def close(self) -> None:
         self._session.close()
 
-
 stm_client = STMClient()
 
 __all__ = ["STMClient", "STMAPIError", "stm_client"]

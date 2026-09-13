@@ -151,7 +151,7 @@ async def get_stm_paradas(query: str | None = None, stop_id: str | None = None):
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-
+# TODO: Arribos no funciona, revisar la documentación de la API de STM.
 @app.get("/api/v1/transport/montevideo/arribos/{stop_id}")
 async def get_stm_arrivals(stop_id: str):
     try:
@@ -159,4 +159,17 @@ async def get_stm_arrivals(stop_id: str):
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
+@app.get("/api/v1/transport/montevideo/buses")
+async def get_stm_buses():
+    try:
+        return stm_client.get_lines()
+    except STMAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+@app.get("/api/v1/transport/montevideo/busstops")
+async def get_stm_busstops():
+    try:
+        return stm_client.get_busstops()
+    except STMAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 

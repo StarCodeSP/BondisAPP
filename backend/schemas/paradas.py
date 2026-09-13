@@ -9,3 +9,12 @@ class Parada(BaseModel):
     activa: bool 
 
     model_config = {"from_attributes": True}
+
+class parada_omnibus(BaseModel):
+    id: int
+    id_parada: int
+    omnibus: str
+    consultas: int
+    last_update: str
+
+    model_config = {"from_attributes": True}
