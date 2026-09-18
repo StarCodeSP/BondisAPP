@@ -178,3 +178,7 @@ async def login_page():
     html_content = _read_frontend_html("login.html")
     return HTMLResponse(content=html_content, status_code=200)
 
+@app.get("/register")
+async def register_page():
+    html_content = _read_frontend_html("signin.html")
+    return HTMLResponse(content=html_content, status_code=200)
