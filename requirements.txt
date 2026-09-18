@@ -5,7 +5,6 @@ pyproj
 fastapi[standard]
 pydantic
 pathlib
-fastapi
 uvicorn
 bcrypt
 sqlalchemy[postgresql]
