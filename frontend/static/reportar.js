@@ -2,15 +2,21 @@ function reportarExperiencia(event) {
     event.preventDefault();
 
     const form = event.currentTarget;
-    const usuarioId = localStorage.getItem('usuario_id');
     const ratingGeneral = Number(form.querySelector('#generalRatingValue').value);
     const ratingLimpieza = Number(form.querySelector('#cleanRatingValue').value);
     const ocupacion = form.querySelector('input[name="occupancy"]:checked');
     const numCoche = Number(form.querySelector('#busNumber').value);
+    const storage = localStorage.getItem("access_token")
+    ? localStorage
+    : sessionStorage;
 
-    if (!usuarioId) {
-        alert('Debes iniciar sesión antes de enviar un reporte.');
-        return;
+    const token = storage.getItem("access_token");
+    const user = JSON.parse(storage.getItem("user") || "null");
+    const usuarioId = user?.id;
+
+    if (!token || !usuarioId) {
+    window.location.href = "/login";
+    return;
     }
 
     const payload = {
@@ -28,7 +34,8 @@ function reportarExperiencia(event) {
     fetch('/api/v1/reportar_experiencia', {
     method: 'POST',
     headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify(payload)
 })
