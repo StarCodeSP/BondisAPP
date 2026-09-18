@@ -173,3 +173,8 @@ async def get_stm_busstops():
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
+@app.get("/login")
+async def login_page():
+    html_content = _read_frontend_html("login.html")
+    return HTMLResponse(content=html_content, status_code=200)
+
