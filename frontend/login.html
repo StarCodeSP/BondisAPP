@@ -58,13 +58,13 @@
     </span>
 </div>
 <!-- Traditional Email & Password Form with enhanced vertical spacing -->
-<form class="flex flex-col gap-4 relative z-10" onsubmit="event.preventDefault();">
+<form class="flex flex-col gap-4 relative z-10" id="login-form">
 <!-- Email Field -->
 <div class="flex flex-col gap-2">
 <label class="font-label-caps text-label-caps text-on-surface-variant tracking-wider uppercase ml-1">Correo Electrónico</label>
 <div class="relative flex items-center">
 <span class="material-symbols-outlined absolute left-3.5 text-on-surface-variant text-[20px] pointer-events-none">mail</span>
-<input class="w-full h-12 pl-11 pr-4 bg-surface-container rounded-xl text-on-surface font-body-sm text-body-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-high transition-colors" placeholder="tu.correo@ejemplo.com" required="" type="email" value="">
+<input class="w-full h-12 pl-11 pr-4 bg-surface-container rounded-xl text-on-surface font-body-sm text-body-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-high transition-colors" id="login-email" placeholder="tu.correo@ejemplo.com" required="" type="email" value="">
 </div>
 </div>
 <!-- Password Field -->
@@ -91,6 +91,7 @@
 <span class="">Ingresar&nbsp;</span>
 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
 </button>
+<p aria-live="polite" class="font-body-sm text-body-sm min-h-5 text-center" id="login-message"></p>
 </form>
 <!-- Community Activity Spark / Trust Cue -->
 
@@ -104,6 +105,7 @@
       Al continuar, aceptas los <a class="underline hover:text-on-surface" href="#">Términos de servicio</a> y la <a class="underline hover:text-on-surface" href="#">Política de privacidad</a> de BusRate.
     </p>
 </footer>
+<script src="/static/login.js"></script>
 </div>
 <script>
   // Simple micro-interaction for one-tap account selector
