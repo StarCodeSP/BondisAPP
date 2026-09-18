@@ -19,3 +19,9 @@ class user(BaseModel):
     level: int
     exp: int
     model_config = {"from_attributes": True}
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: user

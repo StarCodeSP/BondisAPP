@@ -22,6 +22,7 @@ Aplicación web colaborativa para consultar paradas de ómnibus en Montevideo y 
 - SQLAlchemy
 - PostgreSQL mediante `psycopg`
 - `bcrypt` para el hash de contraseñas
+- `PyJWT` para emitir tokens JWT de autenticación
 - Folium, GeoPandas, Pandas y PyProj para trabajar con datos geográficos
 - HTML, JavaScript y Tailwind CSS mediante CDN en el frontend
 
@@ -122,8 +123,8 @@ Todas las rutas de la API usan el prefijo `/api/v1`.
 | `GET` | `/api/v1/paradas/{parada_id}` | Devuelve una parada por ID. Responde `404` si no existe. |
 | `GET` | `/api/v1/experiencias` | Devuelve todos los reportes. |
 | `GET` | `/api/v1/experiencias/{num_coche}` | Busca un reporte por número de coche. Responde `404` si no existe. |
-| `POST` | `/api/v1/register` | Registra un usuario. Responde `409` si el email ya existe. |
-| `POST` | `/api/v1/login` | Verifica las credenciales de un usuario. |
+| `POST` | `/api/v1/register` | Registra un usuario y devuelve un token JWT. Responde `409` si el email ya existe. |
+| `POST` | `/api/v1/login` | Verifica las credenciales y devuelve un token JWT. |
 | `POST` | `/api/v1/reportar_experiencia` | Crea un reporte de experiencia. |
 
 ### Formato de paradas
@@ -153,7 +154,7 @@ Una parada contiene:
 }
 ```
 
-La respuesta incluye el UUID, nombre, email y fecha de registro, pero no devuelve la contraseña.
+La respuesta incluye `access_token`, `token_type` (`bearer`) y el usuario con su UUID, nombre, email y fecha de registro. Nunca devuelve la contraseña.
 
 ### Login
 
@@ -166,7 +167,14 @@ La respuesta incluye el UUID, nombre, email y fecha de registro, pero no devuelv
 }
 ```
 
-Una credencial inexistente responde `404` y una contraseña incorrecta responde `401`. Actualmente el login no genera tokens ni mantiene una sesión autenticada.
+Una credencial inexistente responde `404` y una contraseña incorrecta responde `401`. El token se firma con `HS256`, contiene el UUID del usuario en `sub` y expira según `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` (60 minutos por defecto).
+
+La clave de firma debe configurarse en `.env`:
+
+```dotenv
+JWT_SECRET_KEY=una-clave-larga-y-aleatoria
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+```
 
 ### Reportar una experiencia
 

@@ -7,6 +7,7 @@ pydantic
 pathlib
 uvicorn
 bcrypt
+PyJWT
 sqlalchemy[postgresql]
 psycopg
 alembic
