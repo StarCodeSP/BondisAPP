@@ -16,7 +16,7 @@ from backend.schemas.paradas import Parada
 from backend.schemas.experiencia import Experiencia, ExperienciaCreate
 from backend.schemas.user import AuthResponse, UserCreate, UserLogin, user
 from backend.models.user import user as UserModel
-from backend.stmAPI import STMAPIError, stm_client
+from backend.stmAPI import STMAPIError, stm_client, transporteRest_client
 
 app = FastAPI()
 
@@ -178,11 +178,10 @@ async def get_stm_paradas(query: str | None = None, stop_id: str | None = None):
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-# TODO: Arribos no funciona, revisar la documentación de la API de STM.
 @app.get("/api/v1/transport/montevideo/arribos/{stop_id}")
 async def get_stm_arrivals(stop_id: str):
     try:
-        return stm_client.get_arrivals(stop_id=stop_id)
+        return transporteRest_client.nextAtBusstop(busstop_id=stop_id)
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
