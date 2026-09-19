@@ -22,7 +22,11 @@ from backend.schemas.user import AuthResponse, UserCreate, UserLogin, user
 from backend.models.user import user as UserModel
 from backend.stmAPI import STMAPIError, stm_client, transporteRest_client
 
-app = FastAPI()
+app = FastAPI(
+    title="BondisAPP",
+    description="La primera app colaborativa del transporte publico en Uruguay.",
+)
+
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(
@@ -63,31 +67,31 @@ def _read_frontend_html(filename: str) -> str:
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
 
 # TODO: Agregar manejo de errores y excepciones
-@app.get("/")
+@app.get("/", summary="Página de inicio")
 async def read_index():
     # Leer el archivo inicio.html y devolverlo como respuesta HTML
     html_content = _read_frontend_html("inicio.html")
     return HTMLResponse(content=html_content, status_code=200)
 
 
-@app.get("/paradas")
+@app.get("/paradas", summary="Página de paradas")
 async def read_paradas():
     html_content = _read_frontend_html("paradas.html")
     return HTMLResponse(content=html_content, status_code=200)
 
 
-@app.get("/perfil")
+@app.get("/perfil", summary="Página de perfil")
 async def read_perfil():
     html_content = _read_frontend_html("perfil.html")
     return HTMLResponse(content=html_content, status_code=200)
 
 
-@app.get("/reportar")
+@app.get("/reportar", summary="Página de reportar experiencia")
 async def read_reportar():
     html_content = _read_frontend_html("reportar.html")
     return HTMLResponse(content=html_content, status_code=200)
 
-@app.get("/mapa_paradas_montevideo")
+@app.get("/mapa_paradas_montevideo", summary="Mapa de paradas")
 async def read_mapa_paradas():
     # Leer el archivo mapa_paradas_montevideo.html y devolverlo como respuesta HTML
     html_content = _read_frontend_html("mapa_paradas_montevideo.html")
@@ -95,21 +99,21 @@ async def read_mapa_paradas():
     return HTMLResponse(content=html_content, status_code=200)
 
 
-@app.get("/mapa_paradas_montevideo.html")
+@app.get("/mapa_paradas_montevideo.html", summary="Mapa de paradas (alias)")
 async def read_mapa_paradas_html():
     # Alias para compatibilidad con referencias directas al archivo .html
     html_content = _read_frontend_html("mapa_paradas_montevideo.html")
 
     return HTMLResponse(content=html_content, status_code=200)
 
-@app.get("/api/v1/paradas", response_model=list[Parada])
+@app.get("/api/v1/paradas", summary="Obtener todas las paradas", response_model=list[Parada])
 @limiter.limit("60/minute")
 async def get_paradas(request: Request, db: Session = Depends(get_db)):   
     # Lógica para obtener todas las paradas
     paradas = db.query(ParadaModel).all()
     return paradas
 
-@app.get("/api/v1/paradas/cercanas")
+@app.get("/api/v1/paradas/cercanas", summary="Obtener paradas cercanas a una ubicación", response_model=list[Parada])
 @limiter.limit("60/minute")
 async def get_paradas_cercanas(request: Request, lat: float, lon: float, radius: float = 300, db: Session = Depends(get_db)):
     radio_tierra_metros = 6371000
@@ -130,7 +134,7 @@ async def get_paradas_cercanas(request: Request, lat: float, lon: float, radius:
     
     return paradas_cercanas
 
-@app.get("/api/v1/paradas/{parada_id}", response_model=Parada)
+@app.get("/api/v1/paradas/{parada_id}", summary="Obtener una parada específica", response_model=Parada)
 @limiter.limit("60/minute")
 async def get_parada(request: Request, parada_id: int, db: Session = Depends(get_db)):
     # Lógica para obtener una parada específica por su ID
@@ -139,14 +143,14 @@ async def get_parada(request: Request, parada_id: int, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Parada no encontrada")
     return parada
 
-@app.get("/api/v1/experiencias", response_model=list[Experiencia])
+@app.get("/api/v1/experiencias", summary="Obtener todas las experiencias", response_model=list[Experiencia])
 @limiter.limit("60/minute")
 async def get_experiencias(request: Request, db: Session = Depends(get_db)):
     # Lógica para obtener todas las experiencias
     experiencias = db.query(ExperienciaModel).all()
     return experiencias
 
-@app.get("/api/v1/experiencias/{num_coche}", response_model=Experiencia)
+@app.get("/api/v1/experiencias/{num_coche}", summary="Obtener experiencias según el número de coche", response_model=Experiencia)
 @limiter.limit("60/minute")
 async def get_experiencia(request: Request, num_coche: int, db: Session = Depends(get_db)):
     # Lógica para obtener una experiencia específica por el número de coche
@@ -155,7 +159,7 @@ async def get_experiencia(request: Request, num_coche: int, db: Session = Depend
         raise HTTPException(status_code=404, detail="Experiencias no encontradas")
     return experiencia
 
-@app.post("/api/v1/login", response_model=AuthResponse, status_code=status.HTTP_200_OK)
+@app.post("/api/v1/login", summary="Iniciar sesión", response_model=AuthResponse, status_code=status.HTTP_200_OK)
 @limiter.limit("10/minute")
 async def login_user(request: Request, credentials: UserLogin, db: Session = Depends(get_db)):
     # Lógica para autenticar al usuario
@@ -175,7 +179,7 @@ async def login_user(request: Request, credentials: UserLogin, db: Session = Dep
         "user": db_user,
     }
 
-@app.post("/api/v1/reportar_experiencia", response_model=Experiencia, status_code=status.HTTP_201_CREATED)
+@app.post("/api/v1/reportar_experiencia", summary="Reportar una nueva experiencia", response_model=Experiencia, status_code=status.HTTP_201_CREATED)
 @limiter.limit("30/minute")
 async def reportar_experiencia(request: Request, experiencia: ExperienciaCreate, db: Session = Depends(get_db)):
     # Lógica para reportar la experiencia
@@ -185,7 +189,7 @@ async def reportar_experiencia(request: Request, experiencia: ExperienciaCreate,
     db.refresh(experiencia_db)
     return experiencia_db
 
-@app.post("/api/v1/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+@app.post("/api/v1/register", summary="Registrar un nuevo usuario", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 async def register_user(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
     # Lógica para registrar un nuevo usuario
@@ -209,7 +213,7 @@ async def register_user(request: Request, user_data: UserCreate, db: Session = D
     }
 
 
-@app.get("/api/v1/transport/montevideo/paradas")
+@app.get("/api/v1/transport/montevideo/paradas", summary="Obtener todas las paradas (API IMM)")
 @limiter.limit("60/minute")
 async def get_stm_paradas(request: Request, query: str | None = None, stop_id: str | None = None):
     try:
@@ -217,7 +221,7 @@ async def get_stm_paradas(request: Request, query: str | None = None, stop_id: s
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-@app.get("/api/v1/transport/montevideo/arribos/{stop_id}")
+@app.get("/api/v1/transport/montevideo/arribos/{stop_id}", summary="Obtener arribos a una parada (API IMM TransporteRest)")
 @limiter.limit("300/minute")
 async def get_stm_arrivals(request: Request, stop_id: str):
     try:
@@ -225,7 +229,7 @@ async def get_stm_arrivals(request: Request, stop_id: str):
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-@app.get("/api/v1/transport/montevideo/buses")
+@app.get("/api/v1/transport/montevideo/buses", summary="Obtener líneas de transporte (API IMM)")
 @limiter.limit("60/minute")
 async def get_stm_buses(request: Request):
     try:
@@ -233,20 +237,12 @@ async def get_stm_buses(request: Request):
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-@app.get("/api/v1/transport/montevideo/busstops")
-@limiter.limit("60/minute")
-async def get_stm_busstops(request: Request):
-    try:
-        return stm_client.get_busstops()
-    except STMAPIError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-
-@app.get("/login")
+@app.get("/login", summary="Página de inicio de sesión")
 async def login_page():
     html_content = _read_frontend_html("login.html")
     return HTMLResponse(content=html_content, status_code=200)
 
-@app.get("/register")
+@app.get("/register", summary="Página de registro")
 async def register_page():
     html_content = _read_frontend_html("signin.html")
     return HTMLResponse(content=html_content, status_code=200)
