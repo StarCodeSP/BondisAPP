@@ -100,24 +100,47 @@ class STMClient:
 
     def get_busstops_by_line(self, line: str) -> list[Any]:
         return self._request("/buses/busstops", params={"lines": line})
-    # TODO: FIX: get_upcoming_buses no funciona correctamente, devuelve un error 502 (Bad Request)
-    def get_upcoming_buses(self, busstop_id: int, lines: str | None = None, amount_per_line: int | None = None) -> list[Any]:
-        params: dict[str, Any] = {}
-        if lines:
-            params["lines"] = lines
-        if amount_per_line:
-            params["amountperline"] = amount_per_line
-        return self._request(f"/buses/busstops/{busstop_id}/upcomingbuses", params=params)
 
     def get_bus_lines_for_stop(self, busstop_id: int) -> list[Any]:
         return self._request(f"/buses/busstops/{busstop_id}/lines")
-
-    def get_arrivals(self, stop_id: str | int) -> list[Any]:
-        return self.get_upcoming_buses(int(stop_id))
 
     def close(self) -> None:
         self._session.close()
 
 stm_client = STMClient()
 
-__all__ = ["STMClient", "STMAPIError", "stm_client"]
+class transporteRestClient():
+    def __init__(self, base_url: str | None = None, timeout: float = 20.0):
+        self.base_url = (base_url or os.getenv("TRANSPORTERESTCLIENT_BASE_URL", "https://api.montevideo.gub.uy/transporteRest")).rstrip("/")
+        self.timeout = timeout
+        self._session = httpx.Client(timeout=self.timeout, follow_redirects=True)
+    
+    def _request(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        url = f"{self.base_url}{path}"
+
+        try:
+            response = self._session.get(
+                url,
+                params=params,
+                headers={"Accept": "application/json"},
+            )
+            response.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise STMAPIError(f"No se pudo consultar la API del transporteRest: {exc}") from exc
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise STMAPIError("La API del transporteRest devolvió un JSON inválido") from exc
+
+        if isinstance(payload, dict) and payload.get("error"):
+            raise STMAPIError(str(payload["error"]))
+
+        return payload
+
+    def nextAtBusstop(self, busstop_id: int) -> list[Any]:
+        return self._request(f"/siguientesParada/{busstop_id}")
+
+transporteRest_client = transporteRestClient()
+
+__all__ = ["STMClient", "STMAPIError", "stm_client", "transporteRestClient", "transporteRest_client"]
