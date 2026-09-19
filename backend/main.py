@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, status, HTTPException
+from fastapi import Depends, FastAPI, status, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -9,6 +9,9 @@ import bcrypt
 import jwt
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from backend.database import Base, engine, get_db 
 from backend.models.paradas import Parada as ParadaModel
@@ -20,6 +23,12 @@ from backend.models.user import user as UserModel
 from backend.stmAPI import STMAPIError, stm_client, transporteRest_client
 
 app = FastAPI()
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded, 
+    _rate_limit_exceeded_handler,
+)
 
 # Las tablas se manejan con Alembic; no se crean acá manualmente.
 # Base.metadata.create_all(bind=engine)
@@ -94,13 +103,15 @@ async def read_mapa_paradas_html():
     return HTMLResponse(content=html_content, status_code=200)
 
 @app.get("/api/v1/paradas", response_model=list[Parada])
-async def get_paradas(db: Session = Depends(get_db)):   
+@limiter.limit("60/minute")
+async def get_paradas(request: Request, db: Session = Depends(get_db)):   
     # Lógica para obtener todas las paradas
     paradas = db.query(ParadaModel).all()
     return paradas
 
 @app.get("/api/v1/paradas/cercanas")
-async def get_paradas_cercanas(lat: float, lon: float, radius: float = 300, db: Session = Depends(get_db)):
+@limiter.limit("60/minute")
+async def get_paradas_cercanas(request: Request, lat: float, lon: float, radius: float = 300, db: Session = Depends(get_db)):
     radio_tierra_metros = 6371000
 
     # Ecuación de Haversine para calcular la distancia entre dos puntos geográficos
@@ -120,7 +131,8 @@ async def get_paradas_cercanas(lat: float, lon: float, radius: float = 300, db: 
     return paradas_cercanas
 
 @app.get("/api/v1/paradas/{parada_id}", response_model=Parada)
-async def get_parada(parada_id: int, db: Session = Depends(get_db)):
+@limiter.limit("60/minute")
+async def get_parada(request: Request, parada_id: int, db: Session = Depends(get_db)):
     # Lógica para obtener una parada específica por su ID
     parada = db.query(ParadaModel).filter(ParadaModel.id == parada_id).first()
     if not parada:
@@ -128,13 +140,15 @@ async def get_parada(parada_id: int, db: Session = Depends(get_db)):
     return parada
 
 @app.get("/api/v1/experiencias", response_model=list[Experiencia])
-async def get_experiencias(db: Session = Depends(get_db)):
+@limiter.limit("60/minute")
+async def get_experiencias(request: Request, db: Session = Depends(get_db)):
     # Lógica para obtener todas las experiencias
     experiencias = db.query(ExperienciaModel).all()
     return experiencias
 
 @app.get("/api/v1/experiencias/{num_coche}", response_model=Experiencia)
-async def get_experiencia(num_coche: int, db: Session = Depends(get_db)):
+@limiter.limit("60/minute")
+async def get_experiencia(request: Request, num_coche: int, db: Session = Depends(get_db)):
     # Lógica para obtener una experiencia específica por el número de coche
     experiencia = db.query(ExperienciaModel).filter(ExperienciaModel.num_coche == num_coche).first()
     if not experiencia:
@@ -142,7 +156,8 @@ async def get_experiencia(num_coche: int, db: Session = Depends(get_db)):
     return experiencia
 
 @app.post("/api/v1/login", response_model=AuthResponse, status_code=status.HTTP_200_OK)
-async def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login_user(request: Request, credentials: UserLogin, db: Session = Depends(get_db)):
     # Lógica para autenticar al usuario
     db_user = db.query(UserModel).filter(UserModel.email == credentials.email).first()
     if not db_user:
@@ -161,7 +176,8 @@ async def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
     }
 
 @app.post("/api/v1/reportar_experiencia", response_model=Experiencia, status_code=status.HTTP_201_CREATED)
-async def reportar_experiencia(experiencia: ExperienciaCreate, db: Session = Depends(get_db)):
+@limiter.limit("30/minute")
+async def reportar_experiencia(request: Request, experiencia: ExperienciaCreate, db: Session = Depends(get_db)):
     # Lógica para reportar la experiencia
     experiencia_db = ExperienciaModel(**experiencia.model_dump())
     db.add(experiencia_db)
@@ -170,7 +186,8 @@ async def reportar_experiencia(experiencia: ExperienciaCreate, db: Session = Dep
     return experiencia_db
 
 @app.post("/api/v1/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-async def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register_user(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
     # Lógica para registrar un nuevo usuario
     if db.query(UserModel).filter(UserModel.email == user_data.email).first():
         raise HTTPException(status_code=409, detail="El email ya está registrado")
@@ -193,28 +210,32 @@ async def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/transport/montevideo/paradas")
-async def get_stm_paradas(query: str | None = None, stop_id: str | None = None):
+@limiter.limit("60/minute")
+async def get_stm_paradas(request: Request, query: str | None = None, stop_id: str | None = None):
     try:
         return stm_client.get_stops(query=query, stop_id=stop_id)
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 @app.get("/api/v1/transport/montevideo/arribos/{stop_id}")
-async def get_stm_arrivals(stop_id: str):
+@limiter.limit("300/minute")
+async def get_stm_arrivals(request: Request, stop_id: str):
     try:
         return transporteRest_client.nextAtBusstop(busstop_id=stop_id)
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 @app.get("/api/v1/transport/montevideo/buses")
-async def get_stm_buses():
+@limiter.limit("60/minute")
+async def get_stm_buses(request: Request):
     try:
         return stm_client.get_lines()
     except STMAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 @app.get("/api/v1/transport/montevideo/busstops")
-async def get_stm_busstops():
+@limiter.limit("60/minute")
+async def get_stm_busstops(request: Request):
     try:
         return stm_client.get_busstops()
     except STMAPIError as exc:

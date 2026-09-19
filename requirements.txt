@@ -11,3 +11,4 @@ PyJWT
 sqlalchemy[postgresql]
 psycopg
 alembic
+slowapi
