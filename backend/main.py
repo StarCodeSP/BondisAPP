@@ -8,6 +8,7 @@ import os
 import bcrypt
 import jwt
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from backend.database import Base, engine, get_db 
 from backend.models.paradas import Parada as ParadaModel
@@ -97,6 +98,26 @@ async def get_paradas(db: Session = Depends(get_db)):
     # Lógica para obtener todas las paradas
     paradas = db.query(ParadaModel).all()
     return paradas
+
+@app.get("/api/v1/paradas/cercanas")
+async def get_paradas_cercanas(lat: float, lon: float, radius: float = 300, db: Session = Depends(get_db)):
+    radio_tierra_metros = 6371000
+
+    # Ecuación de Haversine para calcular la distancia entre dos puntos geográficos
+    distancia = (
+        radio_tierra_metros * func.acos(
+            func.cos(func.radians(lat)) *
+            func.cos(func.radians(ParadaModel.latitud)) *
+            func.cos(func.radians(ParadaModel.longitud) - func.radians(lon)) +
+            func.sin(func.radians(lat)) *
+            func.sin(func.radians(ParadaModel.latitud))
+        )
+    )
+
+    # DB calcula la distancia y filtra las paradas dentro del radio especificado
+    paradas_cercanas = db.query(ParadaModel).filter(distancia <= radius).order_by(distancia).all()
+    
+    return paradas_cercanas
 
 @app.get("/api/v1/paradas/{parada_id}", response_model=Parada)
 async def get_parada(parada_id: int, db: Session = Depends(get_db)):
@@ -208,3 +229,4 @@ async def login_page():
 async def register_page():
     html_content = _read_frontend_html("signin.html")
     return HTMLResponse(content=html_content, status_code=200)
+
