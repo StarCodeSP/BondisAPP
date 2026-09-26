@@ -289,6 +289,8 @@ async def register_user(request: Request, user_data: UserCreate, db: Session = D
     db.add(user_db)
     db.commit()
     db.refresh(user_db)
+    raw_refresh_token = _issue_refresh_token(db, user_db.id)
+    _set_refresh_cookie(response, raw_refresh_token)
     return {
         "access_token": _create_access_token(user_db),
         "token_type": "bearer",
