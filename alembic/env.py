@@ -8,7 +8,7 @@ from backend.database import Base, DATABASE_URL
 from backend.models.experiencia import reporteExperiencia
 from backend.models.paradas import Parada
 from backend.models.user import user
-
+from backend.models.refresh_token import RefreshToken
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
