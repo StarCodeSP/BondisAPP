@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, status, HTTPException, Request
+from fastapi import Depends, FastAPI, status, HTTPException, Request, Response, Cookie
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -12,6 +12,8 @@ from sqlalchemy import func
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+import hashlib
+import secrets
 
 from backend.database import Base, engine, get_db 
 from backend.models.paradas import Parada as ParadaModel
@@ -21,6 +23,7 @@ from backend.schemas.experiencia import Experiencia, ExperienciaCreate
 from backend.schemas.user import AuthResponse, UserCreate, UserLogin, user
 from backend.models.user import user as UserModel
 from backend.stmAPI import STMAPIError, stm_client, transporteRest_client
+from backend.models.refresh_token import RefreshToken, REFRESH_TOKEN_EXPIRE_DAYS
 
 app = FastAPI(
     title="BondisAPP",
@@ -42,6 +45,7 @@ FRONTEND_DIR = BASE_DIR.parent / "frontend"
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+REFRESH_COOKIE_NAME = "refresh_token"
 
 if not JWT_SECRET_KEY:
     raise RuntimeError("JWT_SECRET_KEY no está configurada")
@@ -63,6 +67,37 @@ def _read_frontend_html(filename: str) -> str:
         raise HTTPException(status_code=404, detail=f"Archivo no encontrado: {filename}")
     return html_path.read_text(encoding="utf-8")
 
+def _hash_refresh_token(raw_token: str) -> str:
+    """Genera un hash seguro del refresh token para almacenamiento en la base de datos."""
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+def _issue_refresh_token(db: Session, user_id: str) -> str:
+    """Genera un nuevo refresh token, lo guarda en la base de datos y devuelve el token sin hash."""
+    raw_token = secrets.token_urlsafe(32)
+    hashed_token = _hash_refresh_token(raw_token)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+
+    refresh_token_entry = RefreshToken(
+        usuario_id=user_id,
+        token_hash=hashed_token,
+        expira=expires_at,
+        revocado=False
+    )
+    db.add(refresh_token_entry)
+    db.commit()
+    return raw_token
+
+def _set_refresh_cookie(response: Response, raw_token: str):
+    
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=raw_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        path="/api/v1/refresh"
+    )
  
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
 
@@ -177,6 +212,50 @@ async def login_user(request: Request, credentials: UserLogin, db: Session = Dep
         "access_token": _create_access_token(db_user),
         "token_type": "bearer",
         "user": db_user,
+    }
+
+@app.post("/api/v1/refresh", summary="Refrescar el token de acceso", response_model=AuthResponse, status_code=status.HTTP_200_OK)
+@limiter.limit("10/minute")
+async def refresh_token(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+):
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="No hay sesión activa")
+
+    token_hash = _hash_refresh_token(refresh_token)
+    fila = db.query(RefreshToken).filter(RefreshToken.token_hash == token_hash).first()
+
+    ahora = datetime.now(timezone.utc)
+
+    if not fila or fila.revocado or fila.expira < ahora:
+        # Si la fila existe pero ya estaba revocada, alguien está
+        # reusando un refresh token viejo -> señal de robo. Ante la duda,
+        # revocamos todas las sesiones de ese usuario.
+        if fila and fila.revocado:
+            db.query(RefreshToken).filter(
+                RefreshToken.usuario_id == fila.usuario_id,
+                RefreshToken.revocado == False,  # noqa: E712
+            ).update({"revocado": True})
+            db.commit()
+        raise HTTPException(status_code=401, detail="Sesión inválida o expirada")
+
+    db_user = db.query(UserModel).filter(UserModel.id == fila.usuario_id).first()
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Usuario no encontrado")
+
+    # Rotación: este refresh token se usa una sola vez.
+    fila.revocado = True
+    db.commit()
+
+    nuevo_raw_token = _issue_refresh_token(db, db_user.id)
+    _set_refresh_cookie(response, nuevo_raw_token)
+
+    return {
+        "access_token": _create_access_token(db_user),
+        "token_type": "bearer",
     }
 
 @app.post("/api/v1/reportar_experiencia", summary="Reportar una nueva experiencia", response_model=Experiencia, status_code=status.HTTP_201_CREATED)
