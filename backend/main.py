@@ -143,14 +143,14 @@ async def read_mapa_paradas_html():
 
 @app.get("/api/v1/paradas", summary="Obtener todas las paradas", response_model=list[Parada])
 @limiter.limit("60/minute")
-async def get_paradas(request: Request, db: Session = Depends(get_db)):   
+async def get_paradas(request: Request, response: Response, db: Session = Depends(get_db)):   
     # Lógica para obtener todas las paradas
     paradas = db.query(ParadaModel).all()
     return paradas
 
 @app.get("/api/v1/paradas/cercanas", summary="Obtener paradas cercanas a una ubicación", response_model=list[Parada])
 @limiter.limit("60/minute")
-async def get_paradas_cercanas(request: Request, lat: float, lon: float, radius: float = 300, db: Session = Depends(get_db)):
+async def get_paradas_cercanas(request: Request, response: Response, lat: float, lon: float, radius: float = 300, db: Session = Depends(get_db)):
     radio_tierra_metros = 6371000
 
     # Ecuación de Haversine para calcular la distancia entre dos puntos geográficos
@@ -171,7 +171,7 @@ async def get_paradas_cercanas(request: Request, lat: float, lon: float, radius:
 
 @app.get("/api/v1/paradas/{parada_id}", summary="Obtener una parada específica", response_model=Parada)
 @limiter.limit("60/minute")
-async def get_parada(request: Request, parada_id: int, db: Session = Depends(get_db)):
+async def get_parada(request: Request, response: Response, parada_id: int, db: Session = Depends(get_db)):
     # Lógica para obtener una parada específica por su ID
     parada = db.query(ParadaModel).filter(ParadaModel.id == parada_id).first()
     if not parada:
@@ -180,14 +180,14 @@ async def get_parada(request: Request, parada_id: int, db: Session = Depends(get
 
 @app.get("/api/v1/experiencias", summary="Obtener todas las experiencias", response_model=list[Experiencia])
 @limiter.limit("60/minute")
-async def get_experiencias(request: Request, db: Session = Depends(get_db)):
+async def get_experiencias(request: Request, response: Response, db: Session = Depends(get_db)):
     # Lógica para obtener todas las experiencias
     experiencias = db.query(ExperienciaModel).all()
     return experiencias
 
 @app.get("/api/v1/experiencias/{num_coche}", summary="Obtener experiencias según el número de coche", response_model=Experiencia)
 @limiter.limit("60/minute")
-async def get_experiencia(request: Request, num_coche: int, db: Session = Depends(get_db)):
+async def get_experiencia(request: Request, response: Response, num_coche: int, db: Session = Depends(get_db)):
     # Lógica para obtener una experiencia específica por el número de coche
     experiencia = db.query(ExperienciaModel).filter(ExperienciaModel.num_coche == num_coche).first()
     if not experiencia:
@@ -264,7 +264,7 @@ async def refresh_token(
 
 @app.post("/api/v1/reportar_experiencia", summary="Reportar una nueva experiencia", response_model=Experiencia, status_code=status.HTTP_201_CREATED)
 @limiter.limit("30/minute")
-async def reportar_experiencia(request: Request, experiencia: ExperienciaCreate, db: Session = Depends(get_db)):
+async def reportar_experiencia(request: Request, response: Response, experiencia: ExperienciaCreate, db: Session = Depends(get_db)):
     # Lógica para reportar la experiencia
     experiencia_db = ExperienciaModel(**experiencia.model_dump())
     db.add(experiencia_db)
@@ -274,7 +274,7 @@ async def reportar_experiencia(request: Request, experiencia: ExperienciaCreate,
 
 @app.post("/api/v1/register", summary="Registrar un nuevo usuario", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
-async def register_user(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
+async def register_user(request: Request, response: Response, user_data: UserCreate, db: Session = Depends(get_db)):
     # Lógica para registrar un nuevo usuario
     if db.query(UserModel).filter(UserModel.email == user_data.email).first():
         raise HTTPException(status_code=409, detail="El email ya está registrado")
