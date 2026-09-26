@@ -93,7 +93,7 @@ def _set_refresh_cookie(response: Response, raw_token: str):
         key=REFRESH_COOKIE_NAME,
         value=raw_token,
         httponly=True,
-        secure=True,
+        secure=False,
         samesite="lax",
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         path="/api/v1/refresh"
@@ -196,7 +196,7 @@ async def get_experiencia(request: Request, num_coche: int, db: Session = Depend
 
 @app.post("/api/v1/login", summary="Iniciar sesión", response_model=AuthResponse, status_code=status.HTTP_200_OK)
 @limiter.limit("10/minute")
-async def login_user(request: Request, credentials: UserLogin, db: Session = Depends(get_db)):
+async def login_user(request: Request, response: Response, credentials: UserLogin, db: Session = Depends(get_db)):
     # Lógica para autenticar al usuario
     db_user = db.query(UserModel).filter(UserModel.email == credentials.email).first()
     if not db_user:
@@ -207,6 +207,9 @@ async def login_user(request: Request, credentials: UserLogin, db: Session = Dep
 
     if not bcrypt.checkpw(password_bytes, hashed_password_bytes):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+
+    raw_refresh_token = _issue_refresh_token(db, db_user.id)
+    _set_refresh_cookie(response, raw_refresh_token)
     
     return {
         "access_token": _create_access_token(db_user),
@@ -256,6 +259,7 @@ async def refresh_token(
     return {
         "access_token": _create_access_token(db_user),
         "token_type": "bearer",
+        "user": db_user,
     }
 
 @app.post("/api/v1/reportar_experiencia", summary="Reportar una nueva experiencia", response_model=Experiencia, status_code=status.HTTP_201_CREATED)
