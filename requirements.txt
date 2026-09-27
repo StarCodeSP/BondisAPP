@@ -4,7 +4,7 @@ folium
 pyproj
 fastapi[standard]
 pydantic
-pathlib
+python-dotenv
 uvicorn
 bcrypt
 PyJWT
