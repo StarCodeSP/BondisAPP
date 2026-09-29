@@ -100,7 +100,7 @@ def _set_refresh_cookie(response: Response, raw_token: str):
         secure=False,
         samesite="lax",
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-        path="/api/v1/refresh"
+        path="/"
     )
 
 bearer_scheme = HTTPBearer()
@@ -403,3 +403,15 @@ async def register_page():
     html_content = _read_frontend_html("signin.html")
     return HTMLResponse(content=html_content, status_code=200)
 
+@app.post("/api/v1/logout", summary="Cerrar sesión", status_code=status.HTTP_200_OK)
+async def logout_user(response: Response, db: Session = Depends(get_db), refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME)):
+    if refresh_token:
+        token_hash = _hash_refresh_token(refresh_token)
+        fila = db.query(RefreshToken).filter(RefreshToken.token_hash == token_hash).first()
+        if fila:
+            fila.revocado = True
+            db.commit()
+
+    response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/")
+    response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/api/v1/refresh")
+    return {"detail": "Sesión cerrada exitosamente"}

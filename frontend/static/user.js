@@ -1,24 +1,84 @@
 document.addEventListener("DOMContentLoaded", async () => {
-	const token = localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
+	const logoutButton = document.getElementById("logout-button");
 
-	if (!token) {
+	const clearSession = () => {
+		localStorage.removeItem("access_token");
+		localStorage.removeItem("user");
+		sessionStorage.removeItem("access_token");
+		sessionStorage.removeItem("user");
+	};
+
+	const getAccessToken = () => {
+		return localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
+	};
+
+	const getTokenStorage = () => {
+		return localStorage.getItem("access_token") ? localStorage : sessionStorage;
+	};
+
+	const logoutAndRedirect = async () => {
+		try {
+			await fetch("/api/v1/logout", {
+				method: "POST",
+				credentials: "include",
+			});
+		} catch (error) {
+			console.error("No se pudo invalidar la sesión:", error);
+		} finally {
+			clearSession();
+			window.location.href = "/login";
+		}
+	};
+
+	const refreshAccessToken = async () => {
+		const response = await fetch("/api/v1/refresh", {
+			method: "POST",
+			credentials: "include",
+		});
+
+		if (!response.ok) {
+			return false;
+		}
+
+		const data = await response.json();
+		getTokenStorage().setItem("access_token", data.access_token);
+		return true;
+	};
+
+	const fetchCurrentUser = (accessToken) => {
+		return fetch("/api/v1/users/me", {
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
+	};
+
+	if (!getAccessToken()) {
 		window.location.href = "/login";
 		return;
 	}
 
+	logoutButton?.addEventListener("click", async () => {
+		logoutButton.disabled = true;
+		await logoutAndRedirect();
+	});
+
 	try {
-		const response = await fetch("/api/v1/users/me", {
-			headers: {
-				Authorization: `Bearer ${token}`,
-			},
-		});
+		let response = await fetchCurrentUser(getAccessToken());
 
 		if (response.status === 401) {
-			localStorage.removeItem("access_token");
-			localStorage.removeItem("user");
-			sessionStorage.removeItem("access_token");
-			sessionStorage.removeItem("user");
-			window.location.href = "/login";
+			const refreshed = await refreshAccessToken();
+
+			if (!refreshed) {
+				await logoutAndRedirect();
+				return;
+			}
+
+			response = await fetchCurrentUser(getAccessToken());
+		}
+
+		if (response.status === 401) {
+			await logoutAndRedirect();
 			return;
 		}
 
