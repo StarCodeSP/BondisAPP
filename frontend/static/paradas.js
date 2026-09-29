@@ -10,15 +10,95 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const fallbackLocation = { lat: -34.90328, lon: -56.18816 };
   const MAP_ZOOM_THRESHOLD = 13.5;
+  const INITIAL_MAP_ZOOM = 18;
   let userLocation = fallbackLocation;
   let activeMap = null;
   let nearbyStops = [];
   let stopLayer = null;
+  let userLocationMarker = null;
+  let lastNearbyFetchKey = "";
+  let isLoadingNearbyStops = false;
+  let hasLoadedUserLocation = false;
+
+  const getMapRadiusMeters = () => {
+    if (!activeMap) return 800;
+
+    const center = activeMap.getCenter();
+    const corner = activeMap.getBounds().getNorthEast();
+    const diagonalMeters = haversineDistance(center.lat, center.lng, corner.lat, corner.lng);
+    return Math.max(800, diagonalMeters * 1.2);
+  };
+
+  const shouldLoadMoreStops = () => {
+    if (!activeMap || nearbyStops.length === 0) return true;
+
+    const bounds = activeMap.getBounds();
+    const visibleStops = nearbyStops.filter((stop) => {
+      if (!stop || stop.latitud == null || stop.longitud == null) return false;
+      return bounds.contains(L.latLng(stop.latitud, stop.longitud));
+    });
+
+    if (activeMap.getZoom() >= MAP_ZOOM_THRESHOLD) {
+      return visibleStops.length === 0;
+    }
+
+    return visibleStops.length < Math.min(nearbyStops.length, 6);
+  };
 
   const syncZoomMessage = () => {
     if (!activeMap || !zoomMessageEl) return;
     const visible = activeMap.getZoom() < MAP_ZOOM_THRESHOLD;
     zoomMessageEl.style.display = visible ? "flex" : "none";
+  };
+
+  const updateUserLocationMarker = (lat, lon) => {
+    if (!activeMap) return;
+
+    const location = L.latLng(lat, lon);
+    if (!userLocationMarker) {
+      userLocationMarker = L.marker(location, {
+        icon: L.divIcon({
+          className: "current-location-marker",
+          html: '<span class="material-symbols-outlined">my_location</span>',
+          iconSize: [42, 42],
+          iconAnchor: [21, 21],
+        }),
+        interactive: false,
+        zIndexOffset: 1000,
+      }).addTo(activeMap);
+      return;
+    }
+
+    userLocationMarker.setLatLng(location);
+  };
+
+  const addLocateControl = () => {
+    const LocateControl = L.Control.extend({
+      options: { position: "topright" },
+
+      onAdd: () => {
+        const button = L.DomUtil.create("button", "leaflet-locate-control");
+        button.type = "button";
+        button.title = "Centrar en mi ubicación";
+        button.setAttribute("aria-label", "Centrar en mi ubicación");
+        button.innerHTML = '<span class="material-symbols-outlined">my_location</span>';
+
+        L.DomEvent.disableClickPropagation(button);
+        L.DomEvent.on(button, "click", async () => {
+          button.classList.add("is-loading");
+          const location = await getUserLocation();
+          userLocation = location;
+          hasLoadedUserLocation = true;
+          updateUserLocationMarker(location.lat, location.lon);
+          activeMap.setView([location.lat, location.lon], Math.max(activeMap.getZoom(), MAP_ZOOM_THRESHOLD));
+          button.classList.remove("is-loading");
+        });
+
+        return button;
+      },
+    });
+
+    activeMap.addControl(new LocateControl());
   };
 
   const initMap = (lat, lon) => {
@@ -33,7 +113,10 @@ document.addEventListener("DOMContentLoaded", () => {
       zoomControl: true,
       scrollWheelZoom: true,
       attributionControl: true,
-    }).setView([lat, lon], 14);
+    }).setView([lat, lon], INITIAL_MAP_ZOOM);
+
+    updateUserLocationMarker(lat, lon);
+    addLocateControl();
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -41,7 +124,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }).addTo(activeMap);
 
     stopLayer = L.layerGroup().addTo(activeMap);
-    activeMap.on("zoomend", syncZoomMessage);
+    activeMap.on("zoomend moveend", () => {
+      syncZoomMessage();
+
+      if (shouldLoadMoreStops()) {
+        loadNearbyStops({ isViewportRefresh: true });
+      }
+    });
     syncZoomMessage();
   };
 
@@ -298,24 +387,47 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  const loadNearbyStops = async () => {
-    const { lat, lon } = await getUserLocation();
+  const loadNearbyStops = async ({ isViewportRefresh = false } = {}) => {
+    const location = hasLoadedUserLocation ? userLocation : await getUserLocation();
+    const { lat, lon } = location;
     userLocation = { lat, lon };
+    hasLoadedUserLocation = true;
 
-    initMap(lat, lon);
+    if (!activeMap) {
+      initMap(lat, lon);
+    }
+
+    const centerLat = activeMap ? activeMap.getCenter().lat : lat;
+    const centerLon = activeMap ? activeMap.getCenter().lng : lon;
+    const radius = getMapRadiusMeters();
+    const fetchKey = `${centerLat.toFixed(5)}:${centerLon.toFixed(5)}:${Math.round(radius)}`;
+
+    if (!isViewportRefresh && fetchKey === lastNearbyFetchKey) {
+      return;
+    }
+
+    if (isLoadingNearbyStops) {
+      return;
+    }
+
+    isLoadingNearbyStops = true;
+    lastNearbyFetchKey = fetchKey;
 
     try {
-      const response = await fetch(`/api/v1/paradas/cercanas?lat=${lat}&lon=${lon}&radius=300`);
+      const response = await fetch(
+        `/api/v1/paradas/cercanas?lat=${centerLat}&lon=${centerLon}&radius=${radius}`
+      );
       if (!response.ok) {
         throw new Error(`Error ${response.status}`);
       }
 
       const stops = await response.json();
-      renderStops(stops, lat, lon);
+      renderStops(stops, centerLat, centerLon);
+      renderMapStops();
 
       if (stops && stops.length > 0) {
         const firstStop = stops[0];
-        const firstDistance = haversineDistance(lat, lon, firstStop.latitud, firstStop.longitud);
+        const firstDistance = haversineDistance(centerLat, centerLon, firstStop.latitud, firstStop.longitud);
         updateSelectedStop(firstStop, firstDistance);
         loadArrivals(firstStop.id, firstStop);
       }
@@ -331,6 +443,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (stopCountEl) {
         stopCountEl.textContent = "Error";
       }
+    } finally {
+      isLoadingNearbyStops = false;
     }
   };
 

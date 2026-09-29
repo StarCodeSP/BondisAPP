@@ -42,6 +42,53 @@
         .pt-safe {
           padding-top: env(safe-area-inset-top, 0px);
         }
+        .leaflet-locate-control {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 34px;
+          height: 34px;
+          padding: 0;
+          border: 0;
+          border-radius: 4px;
+          background: #201f1f;
+          color: #43e2d2;
+          box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+          cursor: pointer;
+        }
+        .leaflet-locate-control:hover {
+          background: #2a2a2a;
+        }
+        .leaflet-locate-control.is-loading .material-symbols-outlined {
+          animation: locate-spin 0.8s linear infinite;
+        }
+        .current-location-marker {
+          position: relative;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #131313;
+          border-radius: 50%;
+          background: #43e2d2;
+          color: #003732;
+          box-shadow: 0 0 0 6px rgba(67, 226, 210, 0.22), 0 2px 8px rgba(0, 0, 0, 0.45);
+        }
+        .current-location-marker .material-symbols-outlined {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          font-size: 22px;
+          line-height: 1;
+          font-variation-settings: "FILL" 1, "wght" 600;
+        }
+        @keyframes locate-spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
       }
       ::-webkit-scrollbar {
         display: none;
