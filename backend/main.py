@@ -14,6 +14,10 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 import hashlib
 import secrets
+from uuid import UUID
+
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 from backend.database import Base, engine, get_db 
 from backend.models.paradas import Parada as ParadaModel
@@ -98,7 +102,62 @@ def _set_refresh_cookie(response: Response, raw_token: str):
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         path="/api/v1/refresh"
     )
- 
+
+bearer_scheme = HTTPBearer()
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> UserModel:
+    token = credentials.credentials
+
+    try:
+        payload = jwt.decode(
+            token,
+            JWT_SECRET_KEY,
+            algorithms=[JWT_ALGORITHM],
+        )
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401,
+            detail="Token expirado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=401,
+            detail="Token inválido",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    subject = payload.get("sub")
+    if not subject:
+        raise HTTPException(
+            status_code=401,
+            detail="Token sin usuario",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        user_id = UUID(subject)
+    except ValueError:
+        raise HTTPException(
+            status_code=401,
+            detail="Identificador de usuario inválido",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    current_user = db.query(UserModel).filter(UserModel.id == user_id).first()
+
+    if not current_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Usuario no encontrado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return current_user
+
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
 
 # TODO: Agregar manejo de errores y excepciones
@@ -297,6 +356,15 @@ async def register_user(request: Request, response: Response, user_data: UserCre
         "user": user_db,
     }
 
+@app.get(
+    "/api/v1/users/me",
+    response_model=user,
+    summary="Obtener el usuario autenticado",
+)
+async def get_current_user_data(
+    current_user: UserModel = Depends(get_current_user),
+):
+    return current_user
 
 @app.get("/api/v1/transport/montevideo/paradas", summary="Obtener todas las paradas (API IMM)")
 @limiter.limit("60/minute")
