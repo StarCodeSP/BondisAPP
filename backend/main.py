@@ -103,12 +103,19 @@ def _set_refresh_cookie(response: Response, raw_token: str):
         path="/"
     )
 
-bearer_scheme = HTTPBearer()
+bearer_scheme = HTTPBearer(auto_error=False)
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> UserModel:
+    if credentials is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Token requerido",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     token = credentials.credentials
 
     try:
@@ -326,8 +333,20 @@ async def refresh_token(
 
 @app.post("/api/v1/reportar_experiencia", summary="Reportar una nueva experiencia", response_model=Experiencia, status_code=status.HTTP_201_CREATED)
 @limiter.limit("30/minute")
-async def reportar_experiencia(request: Request, response: Response, experiencia: ExperienciaCreate, db: Session = Depends(get_db)):
+async def reportar_experiencia(
+    request: Request,
+    response: Response,
+    experiencia: ExperienciaCreate,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
     # Lógica para reportar la experiencia
+    if experiencia.usuario_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="No podés reportar en nombre de otro usuario",
+        )
+
     experiencia_db = ExperienciaModel(**experiencia.model_dump())
     db.add(experiencia_db)
     db.commit()
