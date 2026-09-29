@@ -18,6 +18,12 @@
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
     <style>
       @layer base {
         html,
@@ -230,48 +236,44 @@
       >
         <div class="w-full relative">
           <div
-            class="absolute inset-0 bg-secondary/10 rounded-xl blur-md"
+            id="leaflet-map"
+            class="relative w-full rounded-xl overflow-hidden shadow-lg shadow-black/50 h-[50vh]"
           ></div>
           <div
-            class="relative w-full rounded-xl overflow-hidden shadow-lg shadow-black/50 h-[50vh]"
-            data-location="Av. Central, San Jose, Costa Rica"
-            style="
-              background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuAtK4vQvPObstsMZDdG4YhY_DVPjYyc_lnwu0RvCt-GcfSq5ga4m5aIvj-yhzK_r8pYHpDUcT6hrthttOXO5buJVjzg2UkNWwVRswChTJdI2Re_tye-Coana32DiJfHcnTk6NDuNUjIB_QzGdZ4DGaqyio5whs1z4XlWR8WV7uNIK6IQCYzB47slIrPauuzKC9N2xPpPAiDyG9g88SLlL2pv2aGqtOoLLk1nZ_X9QfvfFfRbikYcGqA&quot;);
-              background-size: cover;
-              background-position: center center;
-            "
+            id="map-zoom-message"
+            class="pointer-events-none absolute inset-0 flex items-center justify-center text-center px-6 text-on-surface-variant font-title-md text-title-md bg-surface/60 backdrop-blur-[1px]"
           >
-            <div
-              class="absolute top-2 right-2 bg-surface-container-high/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1"
+            zoom in para ver las paradas
+          </div>
+          <div
+            class="absolute top-2 right-2 bg-surface-container-high/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 z-[400]"
+          >
+            <span
+              class="material-symbols-outlined text-secondary text-[16px]"
+              style="font-variation-settings: &quot;FILL&quot; 1"
+              >my_location</span
             >
-              <span
-                class="material-symbols-outlined text-secondary text-[16px]"
-                style="font-variation-settings: &quot;FILL&quot; 1"
-                >my_location</span
+            <span id="distance-badge" class="font-label-caps text-label-caps text-on-surface"
+              >Buscando...</span
+            >
+          </div>
+          <div
+            class="absolute bottom-3 left-4 flex flex-col z-[400] drop-shadow-md"
+          >
+            <span
+              id="selected-stop-name"
+              class="font-headline-lg text-headline-lg text-on-surface"
+              >Buscando parada…</span
+            >
+            <span
+              id="selected-stop-subtitle"
+              class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1"
+            >
+              <span class="material-symbols-outlined text-[14px]"
+                >directions_bus</span
               >
-              <span id="distance-badge" class="font-label-caps text-label-caps text-on-surface"
-                >Buscando...</span
-              >
-            </div>
-            <div
-              class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-surface to-transparent h-1/2"
-            ></div>
-            <div class="absolute bottom-3 left-4 flex flex-col">
-              <span
-                id="selected-stop-name"
-                class="font-headline-lg text-headline-lg text-on-surface drop-shadow-md"
-                >Buscando parada…</span
-              >
-              <span
-                id="selected-stop-subtitle"
-                class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 drop-shadow-md"
-              >
-                <span class="material-symbols-outlined text-[14px]"
-                  >directions_bus</span
-                >
-                Estación principal
-              </span>
-            </div>
+              Estación principal
+            </span>
           </div>
         </div>
         <div class="flex flex-col gap-2 w-full">
@@ -307,6 +309,11 @@
         <div id="arrivals-container" class="flex flex-col gap-3 w-full"></div>
       </div>
     </main>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
     <script src="/static/paradas.js"></script>
     <nav
       class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container/90 backdrop-blur-xl"

@@ -6,8 +6,44 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectedStopNameEl = document.getElementById("selected-stop-name");
   const selectedStopSubtitleEl = document.getElementById("selected-stop-subtitle");
   const distanceBadgeEl = document.getElementById("distance-badge");
+  const zoomMessageEl = document.getElementById("map-zoom-message");
 
   const fallbackLocation = { lat: -34.90328, lon: -56.18816 };
+  const MAP_ZOOM_THRESHOLD = 13.5;
+  let userLocation = fallbackLocation;
+  let activeMap = null;
+  let nearbyStops = [];
+  let stopLayer = null;
+
+  const syncZoomMessage = () => {
+    if (!activeMap || !zoomMessageEl) return;
+    const visible = activeMap.getZoom() < MAP_ZOOM_THRESHOLD;
+    zoomMessageEl.style.display = visible ? "flex" : "none";
+  };
+
+  const initMap = (lat, lon) => {
+    const mapContainer = document.getElementById("leaflet-map");
+    if (!mapContainer || typeof L === "undefined") return;
+
+    if (activeMap) {
+      activeMap.remove();
+    }
+
+    activeMap = L.map("leaflet-map", {
+      zoomControl: true,
+      scrollWheelZoom: true,
+      attributionControl: true,
+    }).setView([lat, lon], 14);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(activeMap);
+
+    stopLayer = L.layerGroup().addTo(activeMap);
+    activeMap.on("zoomend", syncZoomMessage);
+    syncZoomMessage();
+  };
 
   const haversineDistance = (lat1, lon1, lat2, lon2) => {
     const toRad = (value) => (value * Math.PI) / 180;
@@ -93,9 +129,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  const renderMapStops = () => {
+    if (!activeMap || !stopLayer || !Array.isArray(nearbyStops)) return;
+    stopLayer.clearLayers();
+
+    if (activeMap.getZoom() < MAP_ZOOM_THRESHOLD) {
+      syncZoomMessage();
+      return;
+    }
+
+    nearbyStops.forEach((stop) => {
+      const marker = L.circleMarker([stop.latitud, stop.longitud], {
+        radius: 8,
+        color: "#43e2d2",
+        fillColor: "#43e2d2",
+        fillOpacity: 0.9,
+        weight: 2,
+      }).addTo(stopLayer);
+
+      marker.bindPopup(formatStopName(stop));
+      marker.on("click", () => {
+        const distance = haversineDistance(userLocation.lat, userLocation.lon, stop.latitud, stop.longitud);
+        updateSelectedStop(stop, distance);
+        loadArrivals(stop.id, stop);
+      });
+    });
+  };
+
   const renderStops = (stops, lat, lon) => {
     if (!nearbyStopsEl) return;
 
+    nearbyStops = Array.isArray(stops) ? stops : [];
     nearbyStopsEl.innerHTML = "";
 
     if (!stops || stops.length === 0) {
@@ -142,6 +206,10 @@ document.addEventListener("DOMContentLoaded", () => {
         updateSelectedStop(stop, distance);
         loadArrivals(stop.id, stop);
       });
+
+      if (activeMap && activeMap.getZoom() >= MAP_ZOOM_THRESHOLD) {
+        renderMapStops();
+      }
 
       nearbyStopsEl.appendChild(button);
     });
@@ -232,6 +300,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const loadNearbyStops = async () => {
     const { lat, lon } = await getUserLocation();
+    userLocation = { lat, lon };
+
+    initMap(lat, lon);
 
     try {
       const response = await fetch(`/api/v1/paradas/cercanas?lat=${lat}&lon=${lon}&radius=300`);
