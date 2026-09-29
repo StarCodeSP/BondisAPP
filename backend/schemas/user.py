@@ -21,6 +21,15 @@ class user(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UserProfile(BaseModel):
+    id: UUID
+    nombre: str
+    fecha_registro: str
+    level: int
+    exp: int
+    model_config = {"from_attributes": True}
+
+
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

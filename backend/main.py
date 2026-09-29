@@ -24,7 +24,7 @@ from backend.models.paradas import Parada as ParadaModel
 from backend.models.experiencia import reporteExperiencia as ExperienciaModel
 from backend.schemas.paradas import Parada
 from backend.schemas.experiencia import Experiencia, ExperienciaCreate
-from backend.schemas.user import AuthResponse, UserCreate, UserLogin, user
+from backend.schemas.user import AuthResponse, UserCreate, UserLogin, UserProfile, user
 from backend.models.user import user as UserModel
 from backend.stmAPI import STMAPIError, stm_client, transporteRest_client
 from backend.models.refresh_token import RefreshToken, REFRESH_TOKEN_EXPIRE_DAYS
@@ -358,7 +358,7 @@ async def register_user(request: Request, response: Response, user_data: UserCre
 
 @app.get(
     "/api/v1/users/me",
-    response_model=user,
+    response_model=UserProfile,
     summary="Obtener el usuario autenticado",
 )
 async def get_current_user_data(
