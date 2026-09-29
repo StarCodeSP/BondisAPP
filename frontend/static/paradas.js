@@ -193,8 +193,11 @@ document.addEventListener("DOMContentLoaded", () => {
       item.route_name ||
       "Ruta";
 
+    const busId = item.idBus ?? item.id_bus ?? item.bus_id ?? item.num_coche ?? null;
+
     return {
       line: formatLine(line),
+      busId,
       minutes: Number(minutes) ?? 0,
       destination: String(destination || "Ruta"),
       color: line && Number(String(line).replace(/\D/g, "")) % 2 === 0 ? "secondary" : "primary",
@@ -304,7 +307,56 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  const renderArrivals = (items, selectedStop) => {
+  const getBusRatings = async (busId) => {
+    if (busId == null || busId === "") return null;
+
+    try {
+      const response = await fetch(`/api/v1/experiencias/${encodeURIComponent(busId)}`);
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error(`Error ${response.status}`);
+
+      const payload = await response.json();
+      const experiences = Array.isArray(payload) ? payload : payload ? [payload] : [];
+      const getAverage = (field) => {
+        const values = experiences
+          .map((experience) => Number(experience[field]))
+          .filter((rating) => Number.isFinite(rating) && rating >= 1 && rating <= 5);
+
+        if (values.length === 0) return null;
+        return values.reduce((sum, value) => sum + value, 0) / values.length;
+      };
+
+      const latestExperience = experiences
+        .filter((experience) => experience.calificacion_lleno)
+        .sort((first, second) => {
+          return new Date(second.fecha_reporte || 0) - new Date(first.fecha_reporte || 0);
+        })[0];
+
+      const general = getAverage("calificacion_general");
+      const cleaning = getAverage("calificacion_limpieza");
+      const occupancy = latestExperience?.calificacion_lleno || null;
+
+      if (general === null && cleaning === null && occupancy === null) return null;
+
+      return { general, cleaning, occupancy };
+    } catch (error) {
+      console.error(`Error cargando ratings del coche ${busId}:`, error);
+      return null;
+    }
+  };
+
+  const formatOccupancy = (value) => {
+    const labels = {
+      empty: "Vacío",
+      moderate: "Moderado",
+      full: "Lleno",
+      very_full: "Muy lleno",
+    };
+
+    return labels[value] || value || "Sin datos";
+  };
+
+  const renderArrivals = async (items, selectedStop) => {
     if (!arrivalsContainerEl) return;
 
     arrivalsContainerEl.innerHTML = "";
@@ -332,10 +384,29 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    normalized.forEach((item) => {
+    const ratings = await Promise.all(normalized.map((item) => getBusRatings(item.busId)));
+
+    normalized.forEach((item, index) => {
       const card = document.createElement("div");
       const accent = item.color === "secondary" ? "bg-secondary" : "bg-primary";
       const textColor = item.color === "secondary" ? "text-secondary" : "text-primary";
+      const rating = ratings[index];
+      const ratingDetails = rating
+        ? `
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-primary text-[15px]">star</span>
+            ${rating.general === null ? "Sin datos" : rating.general.toFixed(1)}
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-primary text-[15px]">cleaning_services</span>
+            ${rating.cleaning === null ? "Sin datos" : rating.cleaning.toFixed(1)}
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-secondary text-[15px]">groups</span>
+            ${formatOccupancy(rating.occupancy)}
+          </span>
+        `
+        : "Sin datos";
 
       card.className = "w-full bg-surface-container rounded-xl p-4 flex flex-row items-center relative overflow-hidden shadow-md shadow-black/30";
       card.innerHTML = `
@@ -345,15 +416,18 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="font-label-caps text-label-caps text-on-surface-variant">LÍNEA</span>
         </div>
         <div class="flex flex-col ml-4 flex-1">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center">
             <span class="font-title-md text-title-md text-on-surface">${item.destination}</span>
-            <button type="button" class="text-on-surface-variant hover:text-primary transition-colors">
-              <span class="material-symbols-outlined text-[18px]">edit_note</span>
-            </button>
           </div>
-          <div class="flex items-center gap-2 mt-1">
+          <div class="flex flex-wrap items-center gap-2 mt-2">
             <div class="flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded-full">
               <span class="font-label-caps text-[10px] text-on-surface-variant">${item.minutes ?? "-"} min</span>
+            </div>
+            <span class="font-label-caps text-[10px] text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-full">
+              COCHE ${item.busId ?? "Sin dato"}
+            </span>
+            <div class="flex flex-wrap items-center gap-2 font-label-caps text-[10px] text-on-surface-variant">
+              ${ratingDetails}
             </div>
           </div>
         </div>

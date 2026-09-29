@@ -244,14 +244,17 @@ async def get_experiencias(request: Request, response: Response, db: Session = D
     experiencias = db.query(ExperienciaModel).all()
     return experiencias
 
-@app.get("/api/v1/experiencias/{num_coche}", summary="Obtener experiencias según el número de coche", response_model=Experiencia)
+@app.get("/api/v1/experiencias/{num_coche}", summary="Obtener experiencias según el número de coche", response_model=list[Experiencia])
 @limiter.limit("60/minute")
 async def get_experiencia(request: Request, response: Response, num_coche: int, db: Session = Depends(get_db)):
     # Lógica para obtener una experiencia específica por el número de coche
-    experiencia = db.query(ExperienciaModel).filter(ExperienciaModel.num_coche == num_coche).first()
-    if not experiencia:
-        raise HTTPException(status_code=404, detail="Experiencias no encontradas")
-    return experiencia
+    experiencias = (
+        db.query(ExperienciaModel)
+        .filter(ExperienciaModel.num_coche == num_coche)
+        .order_by(ExperienciaModel.fecha_reporte.desc())
+        .all()
+    )
+    return experiencias
 
 @app.post("/api/v1/login", summary="Iniciar sesión", response_model=AuthResponse, status_code=status.HTTP_200_OK)
 @limiter.limit("10/minute")
