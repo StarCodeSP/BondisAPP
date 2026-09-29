@@ -347,8 +347,18 @@ async def reportar_experiencia(
             detail="No podés reportar en nombre de otro usuario",
         )
 
+    comentario = (experiencia.comentario or "").strip()
+    if not comentario:
+        exp_ganada = 30
+    elif len(comentario) < 30:
+        exp_ganada = 40
+    else:
+        exp_ganada = 50
+
     experiencia_db = ExperienciaModel(**experiencia.model_dump())
     db.add(experiencia_db)
+    current_user.exp += exp_ganada
+    current_user.level = max(current_user.level, 1 + current_user.exp // 500)
     db.commit()
     db.refresh(experiencia_db)
     return experiencia_db
