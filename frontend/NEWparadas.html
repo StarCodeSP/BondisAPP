@@ -249,8 +249,8 @@
                 style="font-variation-settings: &quot;FILL&quot; 1"
                 >my_location</span
               >
-              <span class="font-label-caps text-label-caps text-on-surface"
-                >300m</span
+              <span id="distance-badge" class="font-label-caps text-label-caps text-on-surface"
+                >Buscando...</span
               >
             </div>
             <div
@@ -258,16 +258,18 @@
             ></div>
             <div class="absolute bottom-3 left-4 flex flex-col">
               <span
+                id="selected-stop-name"
                 class="font-headline-lg text-headline-lg text-on-surface drop-shadow-md"
-                >Parada Av. Central</span
+                >Buscando parada…</span
               >
               <span
+                id="selected-stop-subtitle"
                 class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 drop-shadow-md"
               >
                 <span class="material-symbols-outlined text-[14px]"
                   >directions_bus</span
                 >
-                Estación Principal
+                Estación principal
               </span>
             </div>
           </div>
@@ -281,59 +283,15 @@
                 >near_me</span
               >Paradas Cercanas</span
             ><span
+              id="stop-count"
               class="font-label-caps text-label-caps text-on-surface-variant"
-              >3 encontradas</span
+              >Buscando...</span
             >
           </div>
-          <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <button
-              class="flex items-center gap-2 px-3 py-2 rounded-xl bg-secondary/15 border border-secondary text-secondary shrink-0 transition-colors"
-            >
-              <span class="material-symbols-outlined text-[18px]"
-                >location_on</span
-              >
-              <div class="flex flex-col items-start">
-                <span
-                  class="font-body-sm font-semibold text-[14px] text-on-surface leading-tight"
-                  >Av. Central</span
-                ><span class="font-label-caps text-[10px] text-secondary"
-                  >Actual · 20 m</span
-                >
-              </div></button
-            ><button
-              class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface shrink-0 transition-colors"
-            >
-              <span
-                class="material-symbols-outlined text-on-surface-variant text-[18px]"
-                >pin_drop</span
-              >
-              <div class="flex flex-col items-start">
-                <span
-                  class="font-body-sm font-semibold text-[14px] text-on-surface leading-tight"
-                  >Estación San Pedro</span
-                ><span
-                  class="font-label-caps text-[10px] text-on-surface-variant"
-                  >150 m</span
-                >
-              </div></button
-            ><button
-              class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface shrink-0 transition-colors"
-            >
-              <span
-                class="material-symbols-outlined text-on-surface-variant text-[18px]"
-                >pin_drop</span
-              >
-              <div class="flex flex-col items-start">
-                <span
-                  class="font-body-sm font-semibold text-[14px] text-on-surface leading-tight"
-                  >Plaza de la Cultura</span
-                ><span
-                  class="font-label-caps text-[10px] text-on-surface-variant"
-                  >280 m</span
-                >
-              </div>
-            </button>
-          </div>
+          <div
+            id="nearby-stops"
+            class="flex gap-2 overflow-x-auto pb-1 scrollbar-none"
+          ></div>
         </div>
         <div class="flex items-center justify-between w-full mt-2">
           <h2 class="font-title-md text-title-md text-on-background">
@@ -346,229 +304,10 @@
             <span class="material-symbols-outlined text-[20px]">refresh</span>
           </button>
         </div>
-        <div class="flex flex-col gap-3 w-full">
-          <div
-            class="w-full bg-surface-container rounded-xl p-4 flex flex-row items-center relative overflow-hidden shadow-md shadow-black/30"
-          >
-            <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-            <div
-              class="flex flex-col justify-center items-center bg-surface-container-high rounded-lg p-2 min-w-[60px]"
-            >
-              <span
-                class="font-headline-lg-mobile text-headline-lg-mobile text-primary"
-                >7</span
-              ><span
-                class="font-label-caps text-label-caps text-on-surface-variant"
-                >LÍNEA</span
-              >
-            </div>
-            <div class="flex flex-col ml-4 flex-1">
-              <div class="flex items-center justify-between">
-                <span class="font-title-md text-title-md text-on-surface"
-                  >Centro - Norte</span
-                ><button
-                  class="text-on-surface-variant hover:text-primary transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[18px]"
-                    >edit_note</span
-                  >
-                </button>
-              </div>
-              <div class="flex items-center gap-2 mt-1">
-                <div
-                  class="flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded-full"
-                >
-                  <span
-                    class="font-label-caps text-[10px] text-on-surface-variant"
-                    >3.5 ★</span
-                  >
-                </div>
-                <div
-                  class="flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded-full"
-                >
-                  <span
-                    class="material-symbols-outlined text-[12px] text-secondary"
-                    >cleaning_services</span
-                  ><span
-                    class="font-label-caps text-[10px] text-on-surface-variant"
-                    >4.2</span
-                  >
-                </div>
-                <div
-                  class="flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded-full"
-                >
-                  <span
-                    class="material-symbols-outlined text-[12px] text-secondary"
-                    >groups</span
-                  ><span
-                    class="font-label-caps text-[10px] text-on-surface-variant"
-                    >Moderado</span
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-col items-end ml-2">
-              <span
-                class="font-headline-lg text-headline-lg text-secondary animate-pulse"
-                >4</span
-              ><span class="font-label-caps text-label-caps text-secondary"
-                >MIN</span
-              >
-            </div>
-          </div>
-          <div
-            class="w-full bg-surface-container rounded-xl p-4 flex flex-row items-center relative overflow-hidden shadow-md shadow-black/30"
-          >
-            <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <div
-              class="flex flex-col justify-center items-center bg-surface-container-high rounded-lg p-2 min-w-[60px]"
-            >
-              <span
-                class="font-headline-lg-mobile text-headline-lg-mobile text-secondary"
-                >12</span
-              ><span
-                class="font-label-caps text-label-caps text-on-surface-variant"
-                >LÍNEA</span
-              >
-            </div>
-            <div class="flex flex-col ml-4 flex-1">
-              <div class="flex items-center justify-between">
-                <span class="font-title-md text-title-md text-on-surface"
-                  >Este - Oeste</span
-                ><button
-                  class="text-on-surface-variant hover:text-primary transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[18px]"
-                    >edit_note</span
-                  >
-                </button>
-              </div>
-              <div class="flex items-center gap-2 mt-1">
-                <div
-                  class="flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded-full"
-                >
-                  <span
-                    class="font-label-caps text-[10px] text-on-surface-variant"
-                    >4.0 ★</span
-                  >
-                </div>
-                <div
-                  class="flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded-full"
-                >
-                  <span
-                    class="material-symbols-outlined text-[12px] text-secondary"
-                    >cleaning_services</span
-                  ><span
-                    class="font-label-caps text-[10px] text-on-surface-variant"
-                    >4.5</span
-                  >
-                </div>
-                <div
-                  class="flex items-center gap-1 bg-secondary/15 px-2 py-0.5 rounded-full"
-                >
-                  <span
-                    class="material-symbols-outlined text-[12px] text-secondary"
-                    >person</span
-                  ><span class="font-label-caps text-[10px] text-secondary"
-                    >Vacío</span
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-col items-end ml-2">
-              <span class="font-headline-lg text-headline-lg text-on-surface"
-                >11</span
-              ><span
-                class="font-label-caps text-label-caps text-on-surface-variant"
-                >MIN</span
-              >
-            </div>
-          </div>
-          <div
-            class="w-full bg-surface-container rounded-xl p-4 flex flex-row items-center relative overflow-hidden shadow-md shadow-black/30"
-          >
-            <div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
-            <div
-              class="flex flex-col justify-center items-center bg-surface-container-high rounded-lg p-2 min-w-[60px]"
-            >
-              <span
-                class="font-headline-lg-mobile text-headline-lg-mobile text-error"
-                >42</span
-              ><span
-                class="font-label-caps text-label-caps text-on-surface-variant"
-                >LÍNEA</span
-              >
-            </div>
-            <div class="flex flex-col ml-4 flex-1">
-              <div class="flex items-center justify-between">
-                <span class="font-title-md text-title-md text-on-surface"
-                  >Ruta Express</span
-                ><button
-                  class="text-on-surface-variant hover:text-primary transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[18px]"
-                    >edit_note</span
-                  >
-                </button>
-              </div>
-              <div class="flex items-center gap-2 mt-1">
-                <div
-                  class="flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded-full"
-                >
-                  <span
-                    class="font-label-caps text-[10px] text-on-surface-variant"
-                    >3.2 ★</span
-                  >
-                </div>
-                <div
-                  class="flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded-full"
-                >
-                  <span
-                    class="material-symbols-outlined text-[12px] text-secondary"
-                    >cleaning_services</span
-                  ><span
-                    class="font-label-caps text-[10px] text-on-surface-variant"
-                    >3.5</span
-                  >
-                </div>
-                <div
-                  class="flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded-full"
-                >
-                  <span
-                    class="material-symbols-outlined text-[12px] text-secondary"
-                    >groups</span
-                  ><span
-                    class="font-label-caps text-[10px] text-on-surface-variant"
-                    >Lleno</span
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-col items-end ml-2">
-              <span class="font-headline-lg text-headline-lg text-on-surface"
-                >18</span
-              ><span
-                class="font-label-caps text-label-caps text-on-surface-variant"
-                >MIN</span
-              >
-            </div>
-          </div>
-        </div>
+        <div id="arrivals-container" class="flex flex-col gap-3 w-full"></div>
       </div>
-      <script>
-        document.addEventListener("DOMContentLoaded", () => {
-          const refreshBtn = document.getElementById("refresh-btn");
-          if (refreshBtn) {
-            refreshBtn.addEventListener("click", function () {
-              this.querySelector("span").classList.add("animate-spin");
-              setTimeout(() => {
-                this.querySelector("span").classList.remove("animate-spin");
-              }, 1000);
-            });
-          }
-        });
-      </script>
     </main>
+    <script src="/static/paradas.js"></script>
     <nav
       class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container/90 backdrop-blur-xl"
       data-active-classes="text-secondary"

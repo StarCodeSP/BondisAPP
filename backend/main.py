@@ -111,7 +111,7 @@ async def read_index():
 
 @app.get("/paradas", summary="Página de paradas")
 async def read_paradas():
-    html_content = _read_frontend_html("paradas.html")
+    html_content = _read_frontend_html("NEWparadas.html")
     return HTMLResponse(content=html_content, status_code=200)
 
 
