@@ -267,12 +267,17 @@
               Mis Reportes Recientes
             </h3>
             <button
-              class="font-body-sm text-body-sm text-secondary hover:text-secondary-fixed-dim transition-colors"
+              class="hidden font-body-sm text-body-sm text-secondary hover:text-secondary-fixed-dim transition-colors"
             >
               Ver todos
             </button>
           </div>
-          <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-center bg-surface-container-low rounded-xl p-8">
+            <span class="font-title-md text-title-md text-on-surface-variant">
+              Coming Soon
+            </span>
+          </div>
+          <div class="hidden flex-col gap-3">
             <div
               class="flex flex-col bg-surface-container-highest rounded-xl p-4 gap-3 relative overflow-hidden shadow-md"
             >
@@ -400,9 +405,17 @@
             Configuración
           </h3>
           <div
+            id="coming-soon-message"
+            class="hidden rounded-xl bg-secondary/15 px-4 py-3 text-center font-body-sm text-body-sm text-secondary"
+            role="status"
+          >
+            Coming Soon
+          </div>
+          <div
             class="flex flex-col bg-surface-container-low rounded-xl overflow-hidden"
           >
             <button
+              data-coming-soon="true"
               class="flex items-center gap-4 p-4 w-full text-left hover:bg-surface-container transition-colors relative group"
             >
               <div
@@ -430,6 +443,7 @@
             </button>
             <div class="h-[1px] w-full bg-surface-container"></div>
             <button
+              data-coming-soon="true"
               class="flex items-center gap-4 p-4 w-full text-left hover:bg-surface-container transition-colors group"
             >
               <div
@@ -453,6 +467,7 @@
             </button>
             <div class="h-[1px] w-full bg-surface-container"></div>
             <button
+              data-coming-soon="true"
               class="flex items-center gap-4 p-4 w-full text-left hover:bg-surface-container transition-colors group"
             >
               <div
@@ -518,6 +533,6 @@
         >
       </div>
     </nav>
-    <script src="/static/user.js?v=2"></script>
+    <script src="/static/user.js?v=3"></script>
   </body>
 </html>

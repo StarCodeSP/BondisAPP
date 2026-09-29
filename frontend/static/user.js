@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
 	const logoutButton = document.getElementById("logout-button");
+	const comingSoonMessage = document.getElementById("coming-soon-message");
 
 	const clearSession = () => {
 		localStorage.removeItem("access_token");
@@ -57,6 +58,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 		window.location.href = "/login";
 		return;
 	}
+
+	document.querySelectorAll("[data-coming-soon]").forEach((button) => {
+		button.addEventListener("click", () => {
+			if (!comingSoonMessage) return;
+			comingSoonMessage.classList.remove("hidden");
+			window.clearTimeout(comingSoonMessage.hideTimeout);
+			comingSoonMessage.hideTimeout = window.setTimeout(() => {
+				comingSoonMessage.classList.add("hidden");
+			}, 2500);
+		});
+	});
 
 	logoutButton?.addEventListener("click", async () => {
 		logoutButton.disabled = true;

@@ -221,12 +221,24 @@
               Líneas Frecuentes
             </h2>
             <button
-              class="font-label-caps text-label-caps text-secondary uppercase tracking-wider"
+              class="hidden font-label-caps text-label-caps text-secondary uppercase tracking-wider"
             >
               Ver todas
             </button>
           </div>
-          <div class="grid grid-cols-1 gap-stack-gap-md">
+          <div class="flex flex-col items-center gap-4 rounded-xl bg-surface-container-low p-6 text-center">
+            <span class="font-title-md text-title-md text-on-surface-variant">
+              Coming Soon
+            </span>
+            <a
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-3 font-title-md text-title-md text-on-secondary transition-colors hover:bg-secondary-container"
+              href="/paradas"
+            >
+              <span class="material-symbols-outlined text-[20px]">map</span>
+              Ver mapa de paradas y arribos
+            </a>
+          </div>
+          <div class="hidden grid-cols-1 gap-stack-gap-md">
             <!-- Card: Normal Status -->
             <div
               class="relative w-full bg-surface-container rounded-xl p-stack-gap-md flex items-center justify-between overflow-hidden group active:bg-surface-container-high transition-colors"
