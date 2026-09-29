@@ -118,10 +118,14 @@ document.addEventListener("DOMContentLoaded", () => {
     updateUserLocationMarker(lat, lon);
     addLocateControl();
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(activeMap);
+L.tileLayer(
+  "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=2e16eeef-17ff-41c8-851c-6ae7d6dbc501",
+  {
+    maxZoom: 20,
+    attribution:
+      '&copy; <a href="https://stadiamaps.com">Stadia Maps</a> &copy; OpenMapTiles &copy; OpenStreetMap contributors',
+  }
+).addTo(activeMap);
 
     stopLayer = L.layerGroup().addTo(activeMap);
     activeMap.on("zoomend moveend", () => {
