@@ -192,21 +192,6 @@ async def read_reportar():
     html_content = _read_frontend_html("reportar.html")
     return HTMLResponse(content=html_content, status_code=200)
 
-@app.get("/mapa_paradas_montevideo", summary="Mapa de paradas")
-async def read_mapa_paradas():
-    # Leer el archivo mapa_paradas_montevideo.html y devolverlo como respuesta HTML
-    html_content = _read_frontend_html("mapa_paradas_montevideo.html")
-
-    return HTMLResponse(content=html_content, status_code=200)
-
-
-@app.get("/mapa_paradas_montevideo.html", summary="Mapa de paradas (alias)")
-async def read_mapa_paradas_html():
-    # Alias para compatibilidad con referencias directas al archivo .html
-    html_content = _read_frontend_html("mapa_paradas_montevideo.html")
-
-    return HTMLResponse(content=html_content, status_code=200)
-
 @app.get("/api/v1/paradas", summary="Obtener todas las paradas", response_model=list[Parada])
 @limiter.limit("60/minute")
 async def get_paradas(request: Request, response: Response, db: Session = Depends(get_db)):   
