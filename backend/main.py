@@ -254,7 +254,7 @@ async def login_user(request: Request, response: Response, credentials: UserLogi
     # Lógica para autenticar al usuario
     db_user = db.query(UserModel).filter(UserModel.email == credentials.email).first()
     if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario o contraseña incorrectos")
+        raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     
     password_bytes = credentials.password.encode('utf-8')
     hashed_password_bytes = db_user.password.encode('utf-8')
