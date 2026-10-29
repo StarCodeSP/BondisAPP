@@ -311,6 +311,8 @@ Estas rutas funcionan como proxy server-side para no exponer las credenciales de
 
 Los errores de los servicios externos se convierten en respuestas `502`.
 
+Las consultas a TransporteREST se registran en el log del servidor con URL, parámetros, estado HTTP, duración y detalle del error. Para ver estos mensajes al ejecutar FastAPI, inicia Uvicorn con un nivel de log igual o superior a `info`, por ejemplo `uvicorn backend.main:app --log-level info`.
+
 ## Rate limiting
 
 `slowapi` identifica al cliente mediante `get_remote_address` y mantiene los contadores en memoria del proceso actual.

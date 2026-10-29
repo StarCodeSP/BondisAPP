@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 import os
+import logging
 import bcrypt
 import jwt
 from sqlalchemy.orm import Session
@@ -28,6 +29,8 @@ from backend.schemas.user import AuthResponse, UserCreate, UserLogin, UserProfil
 from backend.models.user import user as UserModel
 from backend.stmAPI import STMAPIError, stm_client, transporteRest_client
 from backend.models.refresh_token import RefreshToken, REFRESH_TOKEN_EXPIRE_DAYS
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="BondisAPP",
@@ -394,9 +397,15 @@ async def get_stm_paradas(request: Request, query: str | None = None, stop_id: s
 @app.get("/api/v1/transport/montevideo/arribos/{stop_id}", summary="Obtener arribos a una parada (API IMM TransporteRest)")
 @limiter.limit("300/minute")
 async def get_stm_arrivals(request: Request, stop_id: str):
+    logger.info(
+        "Solicitud de arribos recibida: stop_id=%s cliente=%s",
+        stop_id,
+        request.client.host if request.client else "desconocido",
+    )
     try:
         return transporteRest_client.nextAtBusstop(busstop_id=stop_id)
     except STMAPIError as exc:
+        logger.error("Solicitud de arribos fallida: stop_id=%s error=%s", stop_id, exc, exc_info=True)
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 @app.get("/api/v1/transport/montevideo/buses", summary="Obtener líneas de transporte (API IMM)")

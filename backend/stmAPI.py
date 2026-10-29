@@ -1,7 +1,11 @@
 import os
+import logging
+from time import perf_counter
 from typing import Any
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 
 class STMAPIError(RuntimeError):
@@ -117,6 +121,8 @@ class transporteRestClient():
     
     def _request(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         url = f"{self.base_url}{path}"
+        started_at = perf_counter()
+        logger.info("Consulta TransporteREST iniciada: GET %s params=%s", url, params or {})
 
         try:
             response = self._session.get(
@@ -126,16 +132,52 @@ class transporteRestClient():
             )
             response.raise_for_status()
         except httpx.HTTPError as exc:
+            elapsed_ms = (perf_counter() - started_at) * 1000
+            status_code = getattr(getattr(exc, "response", None), "status_code", None)
+            logger.error(
+                "Consulta TransporteREST fallida: GET %s params=%s status=%s duracion_ms=%.2f error=%s",
+                url,
+                params or {},
+                status_code or "sin_respuesta",
+                elapsed_ms,
+                exc,
+                exc_info=True,
+            )
             raise STMAPIError(f"No se pudo consultar la API del transporteRest: {exc}") from exc
 
         try:
             payload = response.json()
         except ValueError as exc:
+            elapsed_ms = (perf_counter() - started_at) * 1000
+            logger.error(
+                "Consulta TransporteREST devolvio JSON invalido: GET %s params=%s status=%s duracion_ms=%.2f",
+                url,
+                params or {},
+                response.status_code,
+                elapsed_ms,
+                exc_info=True,
+            )
             raise STMAPIError("La API del transporteRest devolvió un JSON inválido") from exc
 
         if isinstance(payload, dict) and payload.get("error"):
+            elapsed_ms = (perf_counter() - started_at) * 1000
+            logger.error(
+                "TransporteREST devolvio un error de aplicacion: GET %s params=%s status=%s duracion_ms=%.2f error=%s",
+                url,
+                params or {},
+                response.status_code,
+                elapsed_ms,
+                payload["error"],
+            )
             raise STMAPIError(str(payload["error"]))
 
+        logger.info(
+            "Consulta TransporteREST exitosa: GET %s params=%s status=%s duracion_ms=%.2f",
+            url,
+            params or {},
+            response.status_code,
+            (perf_counter() - started_at) * 1000,
+        )
         return payload
 
     def nextAtBusstop(self, busstop_id: int) -> list[Any]:
