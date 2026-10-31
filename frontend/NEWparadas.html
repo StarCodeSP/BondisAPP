@@ -84,6 +84,24 @@
           line-height: 1;
           font-variation-settings: "FILL" 1, "wght" 600;
         }
+        .skeleton {
+          position: relative;
+          overflow: hidden;
+          background: #2a2a2a;
+        }
+        .skeleton::after {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+          content: "";
+          transform: translateX(-100%);
+          animation: skeleton-shimmer 1.4s ease-in-out infinite;
+        }
+        @keyframes skeleton-shimmer {
+          100% {
+            transform: translateX(100%);
+          }
+        }
         @keyframes locate-spin {
           to {
             transform: rotate(360deg);

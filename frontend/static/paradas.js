@@ -157,6 +157,43 @@ L.tileLayer(
     return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
   };
 
+  const renderNearbyStopsSkeleton = () => {
+    if (!nearbyStopsEl) return;
+
+    stopCountEl.textContent = "Cargando...";
+    nearbyStopsEl.innerHTML = Array.from({ length: 4 }, () => `
+      <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container shrink-0 min-w-[180px]">
+        <span class="skeleton w-[18px] h-[18px] rounded-full"></span>
+        <div class="flex flex-col gap-2 flex-1">
+          <span class="skeleton h-4 rounded w-3/4"></span>
+          <span class="skeleton h-3 rounded w-1/2"></span>
+        </div>
+      </div>
+    `).join("");
+  };
+
+  const renderArrivalsSkeleton = () => {
+    if (!arrivalsContainerEl) return;
+
+    arrivalsContainerEl.innerHTML = Array.from({ length: 3 }, () => `
+      <div class="w-full bg-surface-container rounded-xl p-4 flex flex-row items-center relative overflow-hidden">
+        <span class="skeleton absolute left-0 top-0 bottom-0 w-1"></span>
+        <span class="skeleton w-[60px] h-[58px] rounded-lg"></span>
+        <div class="flex flex-col gap-3 ml-4 flex-1">
+          <span class="skeleton h-5 rounded w-2/3"></span>
+          <div class="flex gap-2">
+            <span class="skeleton h-4 rounded-full w-14"></span>
+            <span class="skeleton h-4 rounded-full w-20"></span>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-2 ml-2">
+          <span class="skeleton h-9 w-10 rounded"></span>
+          <span class="skeleton h-3 w-8 rounded"></span>
+        </div>
+      </div>
+    `).join("");
+  };
+
   const formatStopName = (stop) => {
     const street = stop.calle_principal || stop.calle || stop.street || "Calle";
     const corner = stop.esquina || stop.esquina_1 || stop.corner || "esquina";
@@ -265,6 +302,7 @@ L.tileLayer(
           No se encontraron paradas cercanas en este radio.
         </div>
       `;
+      renderArrivals([], null);
       return;
     }
 
@@ -363,8 +401,6 @@ L.tileLayer(
   const renderArrivals = async (items, selectedStop) => {
     if (!arrivalsContainerEl) return;
 
-    arrivalsContainerEl.innerHTML = "";
-
     if (!items || items.length === 0) {
       arrivalsContainerEl.innerHTML = `
         <div class="w-full rounded-xl bg-surface-container p-4 text-on-surface-variant text-sm">
@@ -390,6 +426,7 @@ L.tileLayer(
 
     const ratings = await Promise.all(normalized.map((item) => getBusRatings(item.busId)));
 
+  arrivalsContainerEl.innerHTML = "";
     normalized.forEach((item, index) => {
       const card = document.createElement("div");
       const accent = item.color === "secondary" ? "bg-secondary" : "bg-primary";
@@ -518,6 +555,13 @@ L.tileLayer(
           </div>
         `;
       }
+      if (arrivalsContainerEl) {
+        arrivalsContainerEl.innerHTML = `
+          <div class="w-full rounded-xl bg-surface-container p-4 text-on-surface-variant text-sm">
+            No se pudieron cargar los arribos porque falló la búsqueda de paradas.
+          </div>
+        `;
+      }
       if (stopCountEl) {
         stopCountEl.textContent = "Error";
       }
@@ -528,6 +572,8 @@ L.tileLayer(
 
   const loadArrivals = async (stopId, selectedStop) => {
     if (!stopId) return;
+
+    renderArrivalsSkeleton();
 
     try {
       const response = await fetch(`/api/v1/transport/montevideo/arribos/${stopId}`);
@@ -553,6 +599,8 @@ L.tileLayer(
   if (refreshBtn) {
     refreshBtn.addEventListener("click", async () => {
       const icon = refreshBtn.querySelector("span");
+      renderNearbyStopsSkeleton();
+      renderArrivalsSkeleton();
       if (icon) {
         icon.classList.add("animate-spin");
       }
@@ -563,5 +611,7 @@ L.tileLayer(
     });
   }
 
+  renderNearbyStopsSkeleton();
+  renderArrivalsSkeleton();
   loadNearbyStops();
 });
