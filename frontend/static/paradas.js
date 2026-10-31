@@ -465,7 +465,7 @@ L.tileLayer(
     });
   };
 
-  const loadNearbyStops = async ({ isViewportRefresh = false } = {}) => {
+  const loadNearbyStops = async ({ isViewportRefresh = false, forceRefresh = false } = {}) => {
     const location = hasLoadedUserLocation ? userLocation : await getUserLocation();
     const { lat, lon } = location;
     userLocation = { lat, lon };
@@ -480,7 +480,7 @@ L.tileLayer(
     const radius = getMapRadiusMeters();
     const fetchKey = `${centerLat.toFixed(5)}:${centerLon.toFixed(5)}:${Math.round(radius)}`;
 
-    if (!isViewportRefresh && fetchKey === lastNearbyFetchKey) {
+    if (!forceRefresh && !isViewportRefresh && fetchKey === lastNearbyFetchKey) {
       return;
     }
 
@@ -556,7 +556,7 @@ L.tileLayer(
       if (icon) {
         icon.classList.add("animate-spin");
       }
-      await loadNearbyStops();
+      await loadNearbyStops({ forceRefresh: true });
       if (icon) {
         setTimeout(() => icon.classList.remove("animate-spin"), 600);
       }
