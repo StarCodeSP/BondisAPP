@@ -22,9 +22,9 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 from backend.database import Base, engine, get_db 
 from backend.models.paradas import Parada as ParadaModel
-from backend.models.experiencia import reporteExperiencia as ExperienciaModel
+from backend.models.experiencia import reporteExperiencia as ExperienciaModel, reporteParadaExperiencia
 from backend.schemas.paradas import Parada
-from backend.schemas.experiencia import Experiencia, ExperienciaCreate
+from backend.schemas.experiencia import Experiencia, ExperienciaCreate, ParadaExperiencia, ParadaExperienciaCreate
 from backend.schemas.user import AuthResponse, UserCreate, UserLogin, UserProfile, user
 from backend.models.user import user as UserModel
 from backend.stmAPI import STMAPIError, stm_client, transporteRest_client
@@ -438,3 +438,35 @@ async def logout_user(response: Response, db: Session = Depends(get_db), refresh
     response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/")
     response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/api/v1/refresh")
     return {"detail": "Sesión cerrada exitosamente"}
+
+@app.post("/api/v1/reportar_parada_experiencia", summary="Reportar una nueva experiencia en una parada", response_model=ParadaExperiencia, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
+async def reportar_parada_experiencia(
+    request: Request,
+    response: Response,
+    parada_experiencia: ParadaExperienciaCreate,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    # Lógica para reportar la experiencia en una parada
+    if parada_experiencia.usuario_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="No podés reportar en nombre de otro usuario",
+        )
+
+    comentario = (parada_experiencia.comentario or "").strip()
+    if not comentario:
+        exp_ganada = 50
+    elif len(comentario) < 30:
+        exp_ganada = 80
+    else:
+        exp_ganada = 100
+
+    parada_experiencia_db = reporteParadaExperiencia(**parada_experiencia.model_dump())
+    db.add(parada_experiencia_db)
+    current_user.exp += exp_ganada
+    current_user.level = max(current_user.level, 1 + current_user.exp // 500)
+    db.commit()
+    db.refresh(parada_experiencia_db)
+    return parada_experiencia_db
