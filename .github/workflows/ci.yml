@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bondis_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/bondis_test
+      JWT_SECRET_KEY: 535676e50a4267838714516bad431c92b0309424b6f919398a4ebb2197dbb9ed
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          pip install "psycopg[binary]" ruff pytest
+
+      - name: Sintaxis
+        run: python -m compileall backend
+
+      - name: La app importa sin romperse
+        run: python -c "import backend.main"
+
+      - name: Migraciones contra Postgres limpio
+        run: alembic upgrade head
+
+      - name: Tests
+        run: python -m pytest -q
