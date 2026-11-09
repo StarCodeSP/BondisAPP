@@ -470,3 +470,7 @@ async def reportar_parada_experiencia(
     db.commit()
     db.refresh(parada_experiencia_db)
     return parada_experiencia_db
+
+@app.get("/p")
+def ping():
+    return Response(status_code=200)
