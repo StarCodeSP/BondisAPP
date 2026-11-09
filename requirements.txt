@@ -1,7 +1,4 @@
-geopandas
 pandas
-folium
-pyproj
 fastapi[standard]
 pydantic
 python-dotenv

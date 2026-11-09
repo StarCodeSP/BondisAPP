@@ -484,3 +484,6 @@ async def get_experiencias_parada(
         .order_by(reporteParadaExperiencia.fecha_reporte.desc())
         .all()
     )
+@app.get("/p")
+def ping():
+    return Response(status_code=200)
