@@ -7,6 +7,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectedStopSubtitleEl = document.getElementById("selected-stop-subtitle");
   const distanceBadgeEl = document.getElementById("distance-badge");
   const zoomMessageEl = document.getElementById("map-zoom-message");
+  const detailsStopNameEl = document.getElementById("details-stop-name");
+  const stopGeneralRatingEl = document.getElementById("stop-general-rating");
+  const stopSafetyRatingEl = document.getElementById("stop-safety-rating");
+  const stopOccupancySummaryEl = document.getElementById("stop-occupancy-summary");
+  const stopCommentsEl = document.getElementById("stop-comments");
 
   const fallbackLocation = { lat: -34.90328, lon: -56.18816 };
   const MAP_ZOOM_THRESHOLD = 13.5;
@@ -259,6 +264,92 @@ L.tileLayer(
 
     if (distanceBadgeEl) {
       distanceBadgeEl.textContent = stop ? formatDistance(distanceMeters) : "Buscando...";
+    }
+
+    loadStopDetails(stop);
+  };
+
+  const renderStopDetailsSkeleton = () => {
+    if (detailsStopNameEl) detailsStopNameEl.textContent = "Cargando detalles...";
+    if (stopGeneralRatingEl) stopGeneralRatingEl.textContent = "...";
+    if (stopSafetyRatingEl) stopSafetyRatingEl.textContent = "...";
+    if (stopOccupancySummaryEl) {
+      stopOccupancySummaryEl.lastElementChild.textContent = "Ocupación: cargando...";
+    }
+    if (stopCommentsEl) {
+      stopCommentsEl.lastElementChild.textContent = "Buscando reportes recientes...";
+    }
+  };
+
+  const renderStopDetails = (stop, reports) => {
+    const validReports = Array.isArray(reports) ? reports : [];
+    const getAverage = (field) => {
+      const values = validReports
+        .map((report) => Number(report[field]))
+        .filter((rating) => Number.isFinite(rating) && rating >= 1 && rating <= 5);
+
+      return values.length
+        ? (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1)
+        : "-";
+    };
+    const occupancy = validReports.reduce((counts, report) => {
+      if (report.calificacion_lleno) {
+        counts[report.calificacion_lleno] = (counts[report.calificacion_lleno] || 0) + 1;
+      }
+      return counts;
+    }, {});
+    const mostCommonOccupancy = Object.entries(occupancy).sort(
+      (first, second) => second[1] - first[1]
+    )[0]?.[0];
+    const comments = validReports.filter((report) => report.comentario).slice(0, 3);
+
+    if (detailsStopNameEl) detailsStopNameEl.textContent = stop ? formatStopName(stop) : "Seleccioná una parada";
+    if (stopGeneralRatingEl) stopGeneralRatingEl.textContent = getAverage("calificacion_general");
+    if (stopSafetyRatingEl) stopSafetyRatingEl.textContent = getAverage("calificacion_seguridad");
+    if (stopOccupancySummaryEl) {
+      stopOccupancySummaryEl.lastElementChild.textContent = `Ocupación habitual: ${formatOccupancy(mostCommonOccupancy)}`;
+    }
+    if (stopCommentsEl) {
+      stopCommentsEl.replaceChildren();
+      const heading = document.createElement("span");
+      heading.className = "font-label-caps text-label-caps text-on-surface-variant";
+      heading.textContent = `REPORTES RECIENTES · ${validReports.length}`;
+      stopCommentsEl.appendChild(heading);
+
+      if (comments.length === 0) {
+        const emptyMessage = document.createElement("p");
+        emptyMessage.className = "font-body-sm text-body-sm text-on-surface-variant";
+        emptyMessage.textContent = "Todavía no hay comentarios para esta parada.";
+        stopCommentsEl.appendChild(emptyMessage);
+        return;
+      }
+
+      comments.forEach((report) => {
+        const comment = document.createElement("p");
+        comment.className = "font-body-sm text-body-sm text-on-surface border-l-2 border-secondary pl-3";
+        comment.textContent = report.comentario;
+        stopCommentsEl.appendChild(comment);
+      });
+    }
+  };
+
+  const loadStopDetails = async (stop) => {
+    if (!stop) {
+      renderStopDetails(null, []);
+      return;
+    }
+
+    renderStopDetailsSkeleton();
+    try {
+      const response = await fetch(`/api/v1/experiencias/parada/${encodeURIComponent(stop.id)}`);
+      if (!response.ok) throw new Error(`Error ${response.status}`);
+      renderStopDetails(stop, await response.json());
+    } catch (error) {
+      console.error("Error cargando detalles de la parada:", error);
+      renderStopDetails(stop, []);
+      if (stopCommentsEl?.lastElementChild) {
+        stopCommentsEl.lastElementChild.textContent = "No se pudieron cargar los reportes.";
+      }
     }
   };
 
