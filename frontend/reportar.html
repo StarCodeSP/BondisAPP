@@ -208,8 +208,35 @@
           </div>
           <!-- Form Section -->
           <form class="flex flex-col gap-stack-gap-lg" id="reportForm">
+            <!-- Report type -->
+            <div
+              class="grid grid-cols-2 gap-2 p-1 rounded-xl bg-surface-container"
+              role="group"
+              aria-label="Tipo de reporte"
+            >
+              <button
+                class="report-type-btn rounded-lg bg-primary text-on-primary font-title-md text-title-md py-3 px-3 transition-colors"
+                data-report-type="bus"
+                type="button"
+              >
+                <span class="material-symbols-outlined align-middle text-[20px]"
+                  >directions_bus</span
+                >
+                Autobús
+              </button>
+              <button
+                class="report-type-btn rounded-lg text-on-surface-variant font-title-md text-title-md py-3 px-3 transition-colors"
+                data-report-type="stop"
+                type="button"
+              >
+                <span class="material-symbols-outlined align-middle text-[20px]"
+                  >location_on</span
+                >
+                Parada
+              </button>
+            </div>
             <!-- Bus number -->
-            <div class="flex flex-col gap-stack-gap-sm">
+            <div class="flex flex-col gap-stack-gap-sm" id="busReportFields">
               <label
                 class="font-title-md text-title-md text-on-surface flex items-center gap-2"
                 for="busNumber"
@@ -229,6 +256,30 @@
                 required=""
                 type="number"
               />
+            </div>
+            <!-- Stop -->
+            <div class="hidden flex-col gap-stack-gap-sm" id="stopReportFields">
+              <label
+                class="font-title-md text-title-md text-on-surface flex items-center gap-2"
+                for="stopId"
+              >
+                <span class="material-symbols-outlined text-secondary"
+                  >location_on</span
+                >
+                Parada
+              </label>
+              <input
+                class="w-full bg-surface-container-high text-on-surface font-body-lg text-body-lg p-stack-gap-md rounded-xl shadow-sm focus:outline-none"
+                id="stopSearch"
+                list="stopOptions"
+                placeholder="Escribí una calle o esquina"
+                type="text"
+                autocomplete="off"
+              />
+              <datalist id="stopOptions">
+                <option value="Cargando paradas..."></option>
+              </datalist>
+              <input id="stopId" name="id_parada" required="" type="hidden" />
             </div>
             <!-- General Experience -->
             <div
@@ -310,9 +361,36 @@
                 type="hidden"
               />
             </div>
+            <!-- Safety -->
+            <div
+              class="hidden flex-col gap-stack-gap-sm bg-surface-container p-stack-gap-md rounded-xl shadow-md"
+              id="safetyRatingSection"
+              style="border: 1px solid rgba(255, 255, 255, 0.05)"
+            >
+              <label
+                class="font-title-md text-title-md text-on-surface flex items-center gap-2"
+              >
+                <span class="material-symbols-outlined text-secondary"
+                  >shield</span
+                >
+                Seguridad
+              </label>
+              <div
+                class="flex justify-between items-center px-4 pt-2"
+                id="safetyRating"
+              >
+                <button class="safety-star-btn text-on-surface-variant hover:text-secondary transition-colors focus:outline-none" data-value="1" type="button"><span class="material-symbols-outlined text-[32px]">star</span></button>
+                <button class="safety-star-btn text-on-surface-variant hover:text-secondary transition-colors focus:outline-none" data-value="2" type="button"><span class="material-symbols-outlined text-[32px]">star</span></button>
+                <button class="safety-star-btn text-on-surface-variant hover:text-secondary transition-colors focus:outline-none" data-value="3" type="button"><span class="material-symbols-outlined text-[32px]">star</span></button>
+                <button class="safety-star-btn text-on-surface-variant hover:text-secondary transition-colors focus:outline-none" data-value="4" type="button"><span class="material-symbols-outlined text-[32px]">star</span></button>
+                <button class="safety-star-btn text-on-surface-variant hover:text-secondary transition-colors focus:outline-none" data-value="5" type="button"><span class="material-symbols-outlined text-[32px]">star</span></button>
+              </div>
+              <input id="safetyRatingValue" name="safetyRatingValue" type="hidden" />
+            </div>
             <!-- Cleanliness -->
             <div
               class="flex flex-col gap-stack-gap-sm bg-surface-container p-stack-gap-md rounded-xl shadow-md"
+              id="cleanRatingSection"
               style="border: 1px solid rgba(255, 255, 255, 0.05)"
             >
               <label
@@ -386,7 +464,6 @@
               <input
                 id="cleanRatingValue"
                 name="cleanRatingValue"
-                required=""
                 type="hidden"
               />
             </div>
@@ -571,6 +648,12 @@
           setupRating(
             "cleanRating",
             "cleanRatingValue",
+            "text-secondary",
+            "text-on-surface-variant",
+          );
+          setupRating(
+            "safetyRating",
+            "safetyRatingValue",
             "text-secondary",
             "text-on-surface-variant",
           );

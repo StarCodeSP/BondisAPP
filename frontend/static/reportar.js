@@ -41,8 +41,12 @@ const refreshAccessToken = async (storage) => {
     }
 };
 
-const sendReport = (token, payload) => {
-    return fetch("/api/v1/reportar_experiencia", {
+const sendReport = (token, payload, reportType) => {
+    const endpoint = reportType === "stop"
+        ? "/api/v1/reportar_parada_experiencia"
+        : "/api/v1/reportar_experiencia";
+
+    return fetch(endpoint, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -56,10 +60,9 @@ async function reportarExperiencia(event) {
     event.preventDefault();
 
     const form = event.currentTarget;
+    const reportType = form.dataset.reportType || "bus";
     const ratingGeneral = Number(form.querySelector("#generalRatingValue").value);
-    const ratingLimpieza = Number(form.querySelector("#cleanRatingValue").value);
     const ocupacion = form.querySelector('input[name="occupancy"]:checked');
-    const numCoche = Number(form.querySelector("#busNumber").value);
     const storage = getAuthStorage();
     let token = storage.getItem("access_token");
     const user = JSON.parse(storage.getItem("user") || "null");
@@ -70,20 +73,31 @@ async function reportarExperiencia(event) {
         return;
     }
 
+    if (reportType === "stop" && !form.querySelector("#stopId").value) {
+        alert("Seleccioná una parada de la lista de sugerencias");
+        return;
+    }
+
     const payload = {
         usuario_id: usuarioId,
         comentario: form.querySelector("#comments").value.trim() || null,
         calificacion_general: ratingGeneral,
-        calificacion_limpieza: ratingLimpieza,
         calificacion_lleno: ocupacion ? ocupacion.value : "",
-        num_coche: numCoche,
     };
+
+    if (reportType === "stop") {
+        payload.calificacion_seguridad = Number(form.querySelector("#safetyRatingValue").value);
+        payload.id_parada = Number(form.querySelector("#stopId").value);
+    } else {
+        payload.calificacion_limpieza = Number(form.querySelector("#cleanRatingValue").value);
+        payload.num_coche = Number(form.querySelector("#busNumber").value);
+    }
 
     const submitButton = form.querySelector('button[type="submit"]');
     submitButton.disabled = true;
 
     try {
-        let response = await sendReport(token, payload);
+        let response = await sendReport(token, payload, reportType);
 
         if (response.status === 401) {
             const refreshed = await refreshAccessToken(storage);
@@ -94,7 +108,7 @@ async function reportarExperiencia(event) {
             }
 
             token = storage.getItem("access_token");
-            response = await sendReport(token, payload);
+            response = await sendReport(token, payload, reportType);
         }
 
         if (response.status === 401) {
@@ -124,5 +138,73 @@ async function reportarExperiencia(event) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('reportForm');
+    const reportTypeButtons = form.querySelectorAll('.report-type-btn');
+    const busFields = document.getElementById('busReportFields');
+    const stopFields = document.getElementById('stopReportFields');
+    const safetySection = document.getElementById('safetyRatingSection');
+    const cleanSection = document.getElementById('cleanRatingSection');
+    const busNumber = document.getElementById('busNumber');
+    const stopSearch = document.getElementById('stopSearch');
+    const stopId = document.getElementById('stopId');
+    const stopOptions = document.getElementById('stopOptions');
+    const cleanRating = document.getElementById('cleanRatingValue');
+    const safetyRating = document.getElementById('safetyRatingValue');
+
+    const setReportType = (reportType) => {
+        const isStop = reportType === 'stop';
+        form.dataset.reportType = reportType;
+        busFields.classList.toggle('hidden', isStop);
+        busFields.classList.toggle('flex', !isStop);
+        stopFields.classList.toggle('hidden', !isStop);
+        stopFields.classList.toggle('flex', isStop);
+        safetySection.classList.toggle('hidden', !isStop);
+        safetySection.classList.toggle('flex', isStop);
+        cleanSection.classList.toggle('hidden', isStop);
+        cleanSection.classList.toggle('flex', !isStop);
+        busNumber.required = !isStop;
+        stopSearch.required = isStop;
+        cleanRating.required = !isStop;
+        safetyRating.required = isStop;
+
+        reportTypeButtons.forEach((button) => {
+            const active = button.dataset.reportType === reportType;
+            button.classList.toggle('bg-primary', active);
+            button.classList.toggle('text-on-primary', active);
+            button.classList.toggle('text-on-surface-variant', !active);
+        });
+    };
+
+    reportTypeButtons.forEach((button) => {
+        button.addEventListener('click', () => setReportType(button.dataset.reportType));
+    });
+
+    fetch('/api/v1/paradas')
+        .then((response) => {
+            if (!response.ok) throw new Error('No se pudieron cargar las paradas');
+            return response.json();
+        })
+        .then((stops) => {
+            stopOptions.replaceChildren();
+            stops
+                .filter((stop) => stop.activa)
+                .sort((first, second) => first.calle_principal.localeCompare(second.calle_principal))
+                .forEach((stop) => {
+                    const label = `#${stop.id} - ${stop.calle_principal} y ${stop.esquina}`;
+                    stopOptions.appendChild(new Option(label));
+                });
+        })
+        .catch((error) => {
+            console.error('Error al cargar las paradas:', error);
+            stopOptions.replaceChildren(new Option('No se pudieron cargar las paradas'));
+        });
+
+    stopSearch.addEventListener('input', () => {
+        const selectedOption = Array.from(stopOptions.options).find(
+            (option) => option.value === stopSearch.value,
+        );
+        stopId.value = selectedOption ? stopSearch.value.match(/^#(\d+)/)[1] : '';
+    });
+
+    setReportType('bus');
     form.addEventListener('submit', reportarExperiencia);
 });
