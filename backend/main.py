@@ -471,6 +471,19 @@ async def reportar_parada_experiencia(
     db.refresh(parada_experiencia_db)
     return parada_experiencia_db
 
+@app.get("/api/v1/experiencias/parada/{parada_id}", summary="Obtener experiencias de una parada", response_model=list[ParadaExperiencia])
+@limiter.limit("60/minute")
+async def get_experiencias_parada(
+    request: Request,
+    parada_id: int,
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(reporteParadaExperiencia)
+        .filter(reporteParadaExperiencia.id_parada == parada_id)
+        .order_by(reporteParadaExperiencia.fecha_reporte.desc())
+        .all()
+    )
 @app.get("/p")
 def ping():
     return Response(status_code=200)

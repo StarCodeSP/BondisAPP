@@ -316,6 +316,51 @@
             class="flex gap-2 overflow-x-auto pb-1 scrollbar-none"
           ></div>
         </div>
+        <section
+          aria-live="polite"
+          class="flex flex-col gap-3 w-full bg-surface-container rounded-xl p-4 shadow-md shadow-black/20"
+          id="stop-details"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <span class="font-label-caps text-label-caps text-secondary"
+                >DETALLE DE PARADA</span
+              >
+              <h2
+                class="font-title-md text-title-md text-on-surface mt-1"
+                id="details-stop-name"
+              >
+                Seleccioná una parada
+              </h2>
+            </div>
+            <span
+              class="material-symbols-outlined text-secondary text-[24px]"
+              >rate_review</span
+            >
+          </div>
+          <div class="grid grid-cols-2 gap-2" id="stop-rating-summary">
+            <div class="bg-surface-container-high rounded-lg p-3">
+              <span class="font-label-caps text-label-caps text-on-surface-variant"
+                >EXPERIENCIA</span
+              >
+              <strong class="block font-headline-lg-mobile text-headline-lg-mobile text-primary mt-1" id="stop-general-rating">-</strong>
+            </div>
+            <div class="bg-surface-container-high rounded-lg p-3">
+              <span class="font-label-caps text-label-caps text-on-surface-variant"
+                >SEGURIDAD</span
+              >
+              <strong class="block font-headline-lg-mobile text-headline-lg-mobile text-secondary mt-1" id="stop-safety-rating">-</strong>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-on-surface-variant" id="stop-occupancy-summary">
+            <span class="material-symbols-outlined text-secondary text-[20px]">groups</span>
+            <span class="font-body-sm text-body-sm">Ocupación: sin datos</span>
+          </div>
+          <div class="flex flex-col gap-2" id="stop-comments">
+            <span class="font-label-caps text-label-caps text-on-surface-variant">REPORTES RECIENTES</span>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Todavía no hay reportes para esta parada.</p>
+          </div>
+        </section>
         <div class="flex items-center justify-between w-full mt-2">
           <h2 class="font-title-md text-title-md text-on-background">
             Próximas Llegadas
@@ -335,7 +380,7 @@
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-    <script src="/static/paradas.js?v=4"></script>
+    <script src="/static/paradas.js?v=5"></script>
     <nav
       class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container/90 backdrop-blur-xl"
       data-active-classes="text-secondary"
